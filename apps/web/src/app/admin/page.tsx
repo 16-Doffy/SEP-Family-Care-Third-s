@@ -1,16 +1,16 @@
 'use client'
+
 import { useMemo } from 'react'
 import Link from 'next/link'
 import {
-  Users, Home, Crown, TrendingUp, Activity, Server, DollarSign,
-  ChevronRight, RefreshCw, Bell, Search, UserPlus,
-  CheckCircle2, XCircle, Box, BarChart3, PieChart as PieIcon,
-  UserCheck,
+  Users, Home, Crown, TrendingUp, Activity, DollarSign,
+  ChevronRight, CheckCircle2, XCircle, Box, BarChart3, PieChart as PieIcon,
+  UserCheck, UserPlus,
 } from 'lucide-react'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, LabelList,
-  AreaChart, Area, XAxis, YAxis, CartesianGrid,
+  XAxis, YAxis, CartesianGrid,
 } from 'recharts'
 import {
   useAdminDashboardSummary,
@@ -21,154 +21,22 @@ import {
   useAdminAuditLogs,
   useAdminJoinRequests,
   useAdminPayments,
-  type AdminAuditLog,
   type AdminDockerContainer,
 } from '@/hooks/useAdmin'
-import { useAuth } from '@/context/AuthContext'
 
-/* ─── Helpers ──────────────────────────────────────────────────────────────── */
-
-function formatVND(value?: number | null) {
-  if (!value) return '0 ₫'
-  if (value >= 1_000_000_000) return `₫${(value / 1_000_000_000).toFixed(1)}B`
-  if (value >= 1_000_000) return `₫${(value / 1_000_000).toFixed(1)}M`
-  if (value >= 1_000) return `₫${(value / 1_000).toFixed(0)}K`
-  return `₫${value}`
-}
-
-function makeTickFormatter(maxVal: number) {
-  if (maxVal >= 1_000_000_000) return (v: number) => `₫${(v / 1_000_000_000).toFixed(1)}B`
-  if (maxVal >= 1_000_000) return (v: number) => `₫${(v / 1_000_000).toFixed(0)}M`
-  if (maxVal >= 1_000) return (v: number) => `₫${(v / 1_000).toFixed(0)}K`
-  if (maxVal > 0) return (v: number) => `₫${v}`
-  return (v: number) => String(v)
-}
-
-function timeAgo(dateStr?: string) {
-  if (!dateStr) return '—'
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const m = Math.floor(diff / 60000)
-  if (m < 1) return 'Vừa xong'
-  if (m < 60) return `${m} phút trước`
-  const h = Math.floor(m / 60)
-  if (h < 24) return `${h} giờ trước`
-  return `${Math.floor(h / 24)} ngày trước`
-}
-
-/** Normalize container: API trả về array trực tiếp với field viết hoa hoặc viết thường */
-function getContainerName(c: AdminDockerContainer) {
-  const raw = (c.name ?? c.Names ?? '') as string
-  return raw.replace(/^\//, '').split(',')[0].trim()
-}
-function getContainerState(c: AdminDockerContainer) {
-  return ((c.state ?? c.State ?? '') as string).toLowerCase()
-}
-function getContainerStatus(c: AdminDockerContainer) {
-  return (c.status ?? c.Status ?? '') as string
-}
-function getContainerImage(c: AdminDockerContainer) {
-  return (c.image ?? c.Image ?? '') as string
-}
-
-/* ─── TopBar ─────────────────────────────────────────────────────────────────── */
-function TopBar() {
-  const { user } = useAuth()
-  const now = new Date()
-  const timeStr = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-  const dateStr = now.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' })
-  const initials = (user?.displayName ?? 'SA').split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()
-
-  return (
-    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-10">
-      <div>
-        <h1 className="text-lg font-bold text-slate-900 leading-tight">Dashboard</h1>
-        <p className="text-xs text-slate-400 mt-0.5">
-          Tổng quan SEPFamilyCare — cập nhật lúc {timeStr}, {dateStr}
-        </p>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="hidden sm:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-slate-400">
-          <Search className="w-3.5 h-3.5" />
-          <span className="hidden lg:inline text-[13px]">Tìm kiếm...</span>
-        </div>
-        <button className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors">
-          <Bell className="w-4 h-4" />
-        </button>
-        <button className="w-8 h-8 rounded-lg border border-slate-200 flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors">
-          <RefreshCw className="w-3.5 h-3.5" />
-        </button>
-        <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-1.5 hover:bg-slate-50 transition-colors cursor-pointer">
-          <div className="w-6 h-6 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-600 font-bold text-[10px]">
-            {initials}
-          </div>
-          <span className="text-[13px] font-medium text-slate-700 hidden sm:block">{user?.displayName ?? 'Super Admin'}</span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ─── KPI Card ────────────────────────────────────────────────────────────────── */
-function KpiCard({
-  label, value, sub, icon: Icon, accentColor, warning, loading,
-}: {
-  label: string
-  value?: string | number | null
-  sub?: string
-  icon: React.ComponentType<{ className?: string }>
-  accentColor: string
-  warning?: boolean
-  loading?: boolean
-}) {
-  return (
-    <div className={`bg-white rounded-xl border p-5 hover:shadow-sm transition-shadow ${warning ? 'border-amber-200 bg-amber-50/20' : 'border-slate-100'}`}>
-      <div className="flex items-start justify-between mb-3">
-        <p className={`text-[10px] font-bold uppercase tracking-widest ${warning ? 'text-amber-600' : 'text-slate-400'}`}>{label}</p>
-        <Icon className={`w-4 h-4 ${warning ? 'text-amber-400' : accentColor}`} />
-      </div>
-      {loading ? (
-        <div className="h-8 w-20 bg-slate-100 rounded-md animate-pulse mb-1" />
-      ) : (
-        <p className="text-[28px] font-bold text-slate-900 leading-none tracking-tight">
-          {value != null ? value : <span className="text-slate-300 text-xl">—</span>}
-        </p>
-      )}
-      {sub && <p className="text-[11px] text-slate-400 mt-2 leading-snug">{sub}</p>}
-    </div>
-  )
-}
-
-/* ─── Container badge ────────────────────────────────────────────────────────── */
-function ContainerDot({ state }: { state: string }) {
-  if (state === 'running') return <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
-  if (state === 'restarting') return <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0" />
-  return <span className="w-2 h-2 rounded-full bg-rose-400 shrink-0" />
-}
-
-function ContainerStateBadge({ state }: { state: string }) {
-  if (state === 'running') return <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">Running</span>
-  if (state === 'restarting') return <span className="text-[11px] font-semibold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-full">Restarting</span>
-  return <span className="text-[11px] font-semibold text-rose-600 bg-rose-50 border border-rose-100 px-2 py-0.5 rounded-full capitalize">{state || 'Stopped'}</span>
-}
-
-/* ─── Audit icon ────────────────────────────────────────────────────────────── */
-function AuditIcon({ log }: { log: AdminAuditLog }) {
-  const t = log.targetType?.toUpperCase()
-  if (t === 'USER') return <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0"><Users className="w-3.5 h-3.5 text-blue-500" /></div>
-  if (t === 'FAMILY') return <div className="w-8 h-8 rounded-full bg-violet-50 flex items-center justify-center shrink-0"><Home className="w-3.5 h-3.5 text-violet-500" /></div>
-  if (t === 'SUBSCRIPTION') return <div className="w-8 h-8 rounded-full bg-amber-50 flex items-center justify-center shrink-0"><Crown className="w-3.5 h-3.5 text-amber-500" /></div>
-  if (t === 'CONTAINER') return <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0"><Server className="w-3.5 h-3.5 text-slate-500" /></div>
-  return <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0"><Activity className="w-3.5 h-3.5 text-slate-400" /></div>
-}
-
-function AuditTag({ log }: { log: AdminAuditLog }) {
-  const t = log.targetType?.toUpperCase()
-  if (t === 'USER') return <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">User</span>
-  if (t === 'FAMILY') return <span className="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-600 font-medium">Family</span>
-  if (t === 'SUBSCRIPTION') return <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-600 font-medium">Sub</span>
-  if (t === 'CONTAINER') return <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-medium">Container</span>
-  return <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 font-medium">{log.targetType ?? 'System'}</span>
-}
+import { TopBar } from './_components/TopBar'
+import { KpiCard } from './_components/KpiCard'
+import { ContainerDot, ContainerStateBadge } from './_components/ContainerBadge'
+import { AuditIcon, AuditTag } from './_components/AuditLogHelpers'
+import {
+  formatVND,
+  makeTickFormatter,
+  timeAgo,
+  getContainerName,
+  getContainerState,
+  getContainerStatus,
+  getContainerImage,
+} from './_utils/formatHelpers'
 
 /* ─── Colors ────────────────────────────────────────────────────────────────── */
 const STATUS_COLORS = ['#10b981', '#94a3b8', '#f43f5e']
@@ -177,7 +45,7 @@ const STATUS_COLORS = ['#10b981', '#94a3b8', '#f43f5e']
 export default function AdminPage() {
   const { data: summary, isLoading: summaryLoading } = useAdminDashboardSummary()
   const { data: revenue } = useAdminRevenueSummary()
-  const { data: revenueMonthly } = useAdminRevenueMonthly()
+  useAdminRevenueMonthly()
   const { data: health } = useAdminSystemHealth()
   const { data: containersData } = useAdminDockerContainers()
   const { data: auditLogs } = useAdminAuditLogs({ limit: 6 })
@@ -207,7 +75,7 @@ export default function AdminPage() {
 
     const daysInMonth = new Date(targetYear, targetMonth + 1, 0).getDate()
     const dataMap: Record<number, { revenue: number, payments: number }> = {}
-    
+
     // Initialize all days of target month to 0
     for (let i = 1; i <= daysInMonth; i++) {
       dataMap[i] = { revenue: 0, payments: 0 }

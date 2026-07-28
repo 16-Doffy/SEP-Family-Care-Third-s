@@ -40,9 +40,8 @@ export default function AdminInvitationsPage() {
   }
 
   return (
-    <div>
-      <Topbar title="Yêu cầu gia nhập" backHref="/admin" />
-      <div className="p-4 md:p-6 space-y-4">
+    <div className="space-y-6">
+
         {/* Filter pills */}
         <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
           {STATUS_FILTERS.map((s) => (
@@ -170,7 +169,7 @@ export default function AdminInvitationsPage() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }
+

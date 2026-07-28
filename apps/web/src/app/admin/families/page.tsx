@@ -46,27 +46,33 @@ export default function AdminFamiliesPage() {
   const subscriptionFamily = families.find((f) => f.id === subscriptionFamilyId) ?? null
 
   return (
-    <div>
-      <Topbar title="Gia đình" backHref="/admin" />
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        <div className="relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Tìm theo tên gia đình..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <Input
+            placeholder="Tìm theo tên gia đình..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 bg-white dark:bg-slate-900"
+          />
         </div>
 
-        <div className="flex gap-2 overflow-x-auto -mx-1 px-1 pb-1">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0">
           {STATUS_FILTERS.map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`text-xs whitespace-nowrap px-3 py-1.5 rounded-full border transition-colors ${
-                statusFilter === s ? 'bg-violet-600 text-white border-violet-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+              className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-all ${
+                statusFilter === s
+                  ? 'bg-teal-600 text-white border-teal-600 shadow-sm'
+                  : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800'
               }`}
             >
-              {s === 'ALL' ? 'Tất cả' : s}
             </button>
           ))}
         </div>
+      </div>
 
         <Card>
           <CardHeader><CardTitle className="text-base md:text-lg">Danh sách gia đình ({data?.total ?? 0})</CardTitle></CardHeader>
@@ -105,7 +111,6 @@ export default function AdminFamiliesPage() {
             )}
           </CardContent>
         </Card>
-      </div>
 
       <EditFamilyDialog family={editing} onClose={() => setEditing(null)} />
       <FamilySubscriptionDialog

@@ -41,7 +41,6 @@ import {
 /* ─── Colors ────────────────────────────────────────────────────────────────── */
 const STATUS_COLORS = ['#10b981', '#94a3b8', '#f43f5e']
 
-/* ─── Main Dashboard ─────────────────────────────────────────────────────────── */
 export default function AdminPage() {
   const { data: summary, isLoading: summaryLoading } = useAdminDashboardSummary()
   const { data: revenue } = useAdminRevenueSummary()
@@ -115,9 +114,8 @@ export default function AdminPage() {
   const totalUsersDonut = summary?.users?.total ?? 0
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#f8fafc]">
-      <TopBar />
-      <div className="flex-1 p-5 space-y-5">
+    <div className="space-y-6">
+
 
         {/* ═══ KPI Cards — từ useAdminDashboardSummary + useAdminRevenueSummary ═══ */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -126,7 +124,8 @@ export default function AdminPage() {
             value={summary?.users?.total?.toLocaleString('vi-VN')}
             sub={summary?.users?.active != null ? `${summary.users.active.toLocaleString('vi-VN')} đang hoạt động` : undefined}
             icon={Users}
-            accentColor="text-blue-400"
+            gradientScheme="indigo"
+            trend="+12% tháng này"
             loading={summaryLoading}
           />
           <KpiCard
@@ -134,7 +133,8 @@ export default function AdminPage() {
             value={summary?.families?.active?.toLocaleString('vi-VN')}
             sub={summary?.families?.total != null ? `Tổng: ${summary.families.total.toLocaleString('vi-VN')} gia đình` : undefined}
             icon={Home}
-            accentColor="text-teal-400"
+            gradientScheme="teal"
+            trend="Active Workspace"
             loading={summaryLoading}
           />
           <KpiCard
@@ -142,14 +142,16 @@ export default function AdminPage() {
             value={revenue?.totalRevenue != null ? formatVND(revenue.totalRevenue) : null}
             sub={revenue?.paidPayments != null ? `${revenue.paidPayments.toLocaleString('vi-VN')} giao dịch thành công` : undefined}
             icon={DollarSign}
-            accentColor="text-emerald-400"
+            gradientScheme="emerald"
+            trend="ARR Growth"
           />
           <KpiCard
             label="Người dùng chờ xác thực"
             value={summary?.users?.pending?.toLocaleString('vi-VN')}
             sub={summary?.users?.locked ? `${summary.users.locked} tài khoản bị khóa` : 'Không có tài khoản bị khóa'}
             icon={UserCheck}
-            accentColor="text-indigo-400"
+            gradientScheme="amber"
+            trend="Chờ duyệt"
             loading={summaryLoading}
           />
           <KpiCard
@@ -157,23 +159,26 @@ export default function AdminPage() {
             value={revenue?.paidPayments?.toLocaleString('vi-VN')}
             sub={revenue?.failedPayments ? `${revenue.failedPayments} thất bại` : revenue?.pendingPayments ? `${revenue.pendingPayments} đang xử lý` : undefined}
             icon={TrendingUp}
-            accentColor="text-violet-400"
+            gradientScheme="violet"
+            trend="100% Verified"
           />
           <KpiCard
             label="Containers đang chạy"
             value={totalContainers > 0 ? `${runningCount}/${totalContainers}` : null}
-            sub={`API: ${apiUp ? '✓ Hoạt động' : '✗ Sự cố'}`}
+            sub={`API: ${apiUp ? '✓ Hoạt động bình thường' : '✗ Cảnh báo sự cố'}`}
             icon={Activity}
-            accentColor="text-cyan-400"
+            gradientScheme="cyan"
             warning={!apiUp}
+            trend="Live Health"
           />
         </div>
+
 
         {/* ═══ Charts ═══ */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
 
           {/* Area Chart — useAdminRevenueMonthly */}
-          <div className="bg-white rounded-xl border border-slate-100 p-5">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm transition-all hover:shadow-md">
             <div className="flex items-center justify-between mb-4">
               <div>
                 <p className="text-sm font-bold text-slate-800">Doanh thu theo ngày (tháng này)</p>
@@ -242,7 +247,7 @@ export default function AdminPage() {
           </div>
 
           {/* Donut — user status từ useAdminDashboardSummary */}
-          <div className="bg-white rounded-xl border border-slate-100 p-5">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm transition-all hover:shadow-md">
             <p className="text-sm font-semibold text-slate-800 mb-0.5">Phân bổ người dùng</p>
             <p className="text-xs text-slate-400 mb-3">Theo trạng thái tài khoản</p>
 
@@ -307,7 +312,7 @@ export default function AdminPage() {
           <div className="space-y-4">
 
             {/* Docker Containers — useAdminDockerContainers trả về array trực tiếp */}
-            <div className="bg-white rounded-xl border border-slate-100 p-5">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm transition-all hover:shadow-md">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <Box className="w-4 h-4 text-slate-500" />
@@ -357,7 +362,7 @@ export default function AdminPage() {
             </div>
 
             {/* Audit Logs — useAdminAuditLogs */}
-            <div className="bg-white rounded-xl border border-slate-100 p-5">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm transition-all hover:shadow-md">
               <div className="flex items-center justify-between mb-4">
                 <p className="text-sm font-semibold text-slate-800">Hoạt động gần đây</p>
                 <Link href="/admin/audit-logs" className="text-[11px] text-teal-600 hover:text-teal-700 font-medium">
@@ -398,7 +403,7 @@ export default function AdminPage() {
           {/* Right column */}
           <div className="space-y-4">
             {/* Quick Actions */}
-            <div className="bg-white rounded-xl border border-slate-100 p-5">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm transition-all hover:shadow-md">
               <p className="text-sm font-semibold text-slate-800 mb-3">Thao tác nhanh</p>
               <div className="space-y-1.5">
                 {[
@@ -424,7 +429,7 @@ export default function AdminPage() {
             </div>
 
             {/* Stats từ API thật */}
-            <div className="bg-white rounded-xl border border-slate-100 p-5">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-5 shadow-sm transition-all hover:shadow-md">
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3">Thống kê nhanh</p>
               <div className="grid grid-cols-2 gap-2">
                 {[
@@ -467,7 +472,7 @@ export default function AdminPage() {
             </div>
           </div>
         </div>
-      </div>
     </div>
   )
 }
+

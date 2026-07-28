@@ -137,9 +137,8 @@ export default function AdminSystemPage() {
   }
 
   return (
-    <div>
-      <Topbar title="Hệ thống & Hạ tầng" backHref="/admin" />
-      <div className="p-4 md:p-6 space-y-5">
+    <div className="space-y-6">
+
 
         {/* Health tiles */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -427,10 +426,10 @@ export default function AdminSystemPage() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }
+
 
 function Row({ label, value }: { label: string; value?: string | null }) {
   return (

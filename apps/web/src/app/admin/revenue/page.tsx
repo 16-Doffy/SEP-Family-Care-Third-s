@@ -256,9 +256,8 @@ export default function RevenueAdminPage() {
   const chartLoading = !allPaid
 
   return (
-    <div>
-      <Topbar title="Doanh thu" backHref="/admin" />
-      <div className="p-4 md:p-6 space-y-5">
+    <div className="space-y-6">
+
 
         {/* ── Summary cards ─────────────────────────────────────────────── */}
         {sumLoading ? (
@@ -505,8 +504,7 @@ export default function RevenueAdminPage() {
             )}
           </CardContent>
         </Card>
-
-      </div>
     </div>
   )
 }
+

@@ -44,9 +44,8 @@ export default function AuditLogsPage() {
   const logs = data?.items ?? []
 
   return (
-    <div>
-      <Topbar title="Audit Logs" backHref="/admin" />
-      <div className="p-4 md:p-6 space-y-4">
+    <div className="space-y-6">
+
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2">
@@ -158,7 +157,7 @@ export default function AuditLogsPage() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }
+

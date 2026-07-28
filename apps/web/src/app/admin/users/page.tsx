@@ -47,34 +47,38 @@ function getInitials(name: string) {
 }
 
 /* ─── Plan badge ─────────────────────────────────────────────────────────── */
+/* ─── Plan badge ─────────────────────────────────────────────────────────── */
 function PlanBadge({ planCode, planName }: { planCode?: string; planName?: string }) {
-  if (!planCode) return <span className="text-[11px] font-medium text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">Miễn phí</span>
+  if (!planCode) return <span className="text-[11px] font-medium text-slate-500 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full">Miễn phí</span>
   const code = planCode.toUpperCase()
   const label = planName ?? planCode
-  if (code.includes('PREMIUM') || code.includes('PRO')) {
-    return <span className="text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-100 px-2 py-0.5 rounded-md">{label}</span>
+  if (code.includes('PREMIUM') || code.includes('PRO') || code.includes('VIP')) {
+    return <span className="text-[11px] font-bold text-amber-700 dark:text-amber-300 bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 px-2.5 py-0.5 rounded-full shadow-sm">👑 {label}</span>
   }
-  if (code.includes('BASIC') || code.includes('STANDARD')) {
-    return <span className="text-[11px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-0.5 rounded-md">{label}</span>
+  if (code.includes('BASIC') || code.includes('STANDARD') || code.includes('MONTHLY')) {
+    return <span className="text-[11px] font-bold text-indigo-700 dark:text-indigo-300 bg-indigo-500/10 border border-indigo-500/30 px-2.5 py-0.5 rounded-full">⚡ {label}</span>
   }
-  // FREE or others
-  return <span className="text-[11px] font-medium text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">{label}</span>
+  return <span className="text-[11px] font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-2.5 py-0.5 rounded-full">{label}</span>
 }
 
 /* ─── Status Badge ─────────────────────────────────────────────────────────── */
 function StatusBadge({ status }: { status: string }) {
   if (status === 'ACTIVE') return (
-    <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
-      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />Hoạt động
+    <span className="inline-flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 shadow-sm">
+      <span className="relative flex h-2 w-2">
+        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+      </span>
+      Hoạt động
     </span>
   )
   if (status === 'SUSPENDED') return (
-    <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full bg-rose-50 text-rose-700 border border-rose-100">
-      Tạm khóa
+    <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-400 border border-rose-500/30">
+      <ShieldOff className="w-3 h-3" /> Tạm khóa
     </span>
   )
   return (
-    <span className="inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 border border-slate-200">
+    <span className="inline-flex items-center text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
       Không HĐ
     </span>
   )
@@ -84,60 +88,28 @@ function StatusBadge({ status }: { status: string }) {
 function RoleBadge({ userType, familyRole, hasFamily }: { userType: string; familyRole?: string; hasFamily?: boolean }) {
   if (userType === 'SYSTEM_ADMIN') {
     return (
-      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-violet-50 text-violet-700 border border-violet-100">
-        Admin
+      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-violet-500/20 to-purple-500/20 text-violet-700 dark:text-violet-300 border border-violet-500/30 shadow-sm">
+        <ShieldCheck className="w-3 h-3 text-violet-500" /> Admin System
       </span>
     )
   }
 
   if (hasFamily) {
     if (familyRole === 'FAMILY_MANAGER' || familyRole === 'MANAGER') {
-      return <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 border border-amber-100">Quản lý gia đình</span>
+      return <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/30">👑 Quản lý GD</span>
     }
     if (familyRole === 'FAMILY_DEPUTY' || familyRole === 'DEPUTY') {
-      return <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 border border-blue-100">Phó quản lý</span>
+      return <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/30">⭐ Phó quản lý</span>
     }
-    return <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 border border-teal-100">Thành viên</span>
+    return <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-teal-500/10 text-teal-700 dark:text-teal-300 border border-teal-500/30">👥 Thành viên</span>
   }
 
   return (
-    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+    <span className="text-[11px] font-medium px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
       User
     </span>
   )
 }
-
-/* ─── Page Header ──────────────────────────────────────────────────────────── */
-function PageHeader() {
-  const { user } = useAuth()
-  const initials = (user?.displayName ?? 'SA').split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()
-
-  return (
-    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-white sticky top-0 z-10">
-      <div>
-        <h1 className="text-lg font-bold text-slate-900 leading-tight">Quản lý Người dùng</h1>
-        <p className="text-xs text-slate-400 mt-0.5">Xem, tìm kiếm và quản lý tất cả tài khoản trên nền tảng</p>
-      </div>
-      <div className="flex items-center gap-2">
-        <div className="hidden sm:flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-[13px] text-slate-400">
-          <Search className="w-3.5 h-3.5" />
-          <span className="hidden lg:inline">Tìm kiếm...</span>
-          <span className="hidden lg:inline text-[10px] text-slate-300 border border-slate-200 rounded px-1 py-0.5">⌘K</span>
-        </div>
-        {/* Notification and refresh icons removed */}
-        <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-slate-50 transition-colors">
-          <div className="w-6 h-6 rounded-full bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-600 font-bold text-[10px]">
-            {initials}
-          </div>
-          <span className="text-[13px] font-medium text-slate-700 hidden sm:block">{user?.displayName ?? 'Super Admin'}</span>
-          <ChevronDown className="w-3 h-3 text-slate-400" />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ─── Main ────────────────────────────────────────────────────────────────── */
 
 const PAGE_SIZES = [10, 20, 50] as const
 type StatusFilter = 'ALL' | 'ACTIVE' | 'INACTIVE' | 'SUSPENDED'
@@ -174,30 +146,23 @@ export default function AdminUsersPage() {
   const totalPages = Math.ceil(total / pageSize)
 
   /* ── Lookup data for family name + plan ── */
-  // family members: userId → familyId + role
   const { data: allMembersData } = useAdminFamilyMembers({ limit: 100 })
-  // families: familyId → family name
   const { data: allFamiliesData } = useAdminFamilies({ limit: 100 })
-  // paid payments: familyId → planCode (most recent)
   const { data: allPaymentsData } = useAdminPayments({ status: 'PAID', limit: 100 })
-  // plans: planCode → plan name
   const { data: plansData } = useAdminSubscriptionPlans({ limit: 20 })
 
   /* ── Build lookup maps ── */
   const userFamilyMap = useMemo(() => {
     const map: Record<string, { familyId: string; familyRole: string }> = {}
     for (const m of allMembersData?.items ?? []) {
-      // API may return userId directly OR nested in user.id
       const uid = m.userId || m.user?.id
       if (!uid) continue
-      // Prefer ACTIVE membership; overwrite only if this membership is ACTIVE
       if (!map[uid] || m.status === 'ACTIVE') {
         map[uid] = { familyId: m.familyId, familyRole: m.familyRole }
       }
     }
     return map
   }, [allMembersData])
-
 
   const familyNameMap = useMemo(() => {
     const map: Record<string, string> = {}
@@ -208,7 +173,6 @@ export default function AdminUsersPage() {
   }, [allFamiliesData])
 
   const familyPlanMap = useMemo(() => {
-    // Most recent paid payment per family → planCode
     const sorted = [...(allPaymentsData?.items ?? [])].sort((a, b) =>
       new Date(b.createdAt ?? 0).getTime() - new Date(a.createdAt ?? 0).getTime()
     )
@@ -267,10 +231,8 @@ export default function AdminUsersPage() {
   ]
 
   return (
-    <div className="flex flex-col min-h-screen bg-[#f8fafc]">
-      <PageHeader />
+    <div className="space-y-6">
 
-      <div className="flex-1 px-5 py-4 space-y-4">
 
         {/* Action bar */}
         <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -517,8 +479,8 @@ export default function AdminUsersPage() {
             </div>
           )}
         </div>
-      </div>
-
     </div>
   )
 }
+
+

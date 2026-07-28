@@ -206,14 +206,17 @@ export default function PlansAdminPage() {
   const isPending = createPlan.isPending || updatePlan.isPending
 
   return (
-    <div>
-      <Topbar title="Quản lý gói thuê bao" backHref="/admin" />
-      <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-        <div className="flex justify-end items-center">
-          <Button onClick={openCreate} className="gap-2">
-            <Plus className="w-4 h-4" />Tạo gói mới
-          </Button>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-base font-bold text-slate-900 dark:text-white">Danh sách Gói dịch vụ ({plans.length})</h2>
+          <p className="text-xs text-slate-500">Cấu hình tính năng và mức giá cho các gói thuê bao gia đình</p>
         </div>
+        <Button onClick={openCreate} className="gap-2 bg-teal-600 hover:bg-teal-700 text-white">
+          <Plus className="w-4 h-4" />Tạo gói mới
+        </Button>
+      </div>
+
 
         {isLoading ? (
           <div className="flex items-center justify-center py-10">
@@ -285,7 +288,7 @@ export default function PlansAdminPage() {
             ))}
           </div>
         )}
-      </div>
+
 
       <Dialog open={open} onOpenChange={(o) => { if (!o) closeDialog() }}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">

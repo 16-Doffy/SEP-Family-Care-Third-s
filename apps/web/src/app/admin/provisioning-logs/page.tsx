@@ -39,9 +39,8 @@ export default function ProvisioningLogsPage() {
   const totalPages = data?.totalPages ?? 1
 
   return (
-    <div>
-      <Topbar title="Provisioning Logs" backHref="/admin" />
-      <div className="p-4 md:p-6 space-y-4">
+    <div className="space-y-6">
+
 
         {/* Filters */}
         <div className="flex flex-wrap gap-2">
@@ -148,10 +147,10 @@ export default function ProvisioningLogsPage() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }
+
 
 function FamilyNameAndManager({ familyId, cachedFamilies }: { familyId: string; cachedFamilies: AdminFamily[] }) {
   // Check if already in cache AND has members array populated

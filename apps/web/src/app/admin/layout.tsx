@@ -7,39 +7,32 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { Sidebar } from '@/components/layout/Sidebar'
+import { AdminTopBar } from '@/components/layout/AdminTopBar'
 import { MobileAdminNav } from '@/components/layout/MobileAdminNav'
 import { Loader2 } from 'lucide-react'
 
-/**
- * Layout admin với kiểm tra quyền SYSTEM_ADMIN nghiêm ngặt.
- * Redirect ngay lập tức về /dashboard nếu user không phải SYSTEM_ADMIN,
- * kể cả khi user đã đăng nhập nhưng không đủ quyền.
- */
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
   const router = useRouter()
 
-  /**
-   * Kiểm tra quyền sau khi auth state tải xong.
-   * Điều kiện kép: phải có user VÀ role phải là SYSTEM_ADMIN.
-   */
   useEffect(() => {
     if (!isLoading && (!user || user.role !== 'SYSTEM_ADMIN')) {
       router.push('/dashboard')
     }
   }, [user, isLoading, router])
 
-  // Hiển thị spinner khi đang kiểm tra auth
-  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-blue-600" /></div>
-  // Trả về null để tránh flash nội dung admin trước khi redirect
+  if (isLoading) return <div className="min-h-screen flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-teal-600" /></div>
   if (!user || user.role !== 'SYSTEM_ADMIN') return null
 
   return (
-    <div className="flex min-h-screen bg-[#f8fafc]">
+    <div className="flex min-h-screen bg-[#f8fafc] dark:bg-slate-950 text-slate-900 dark:text-slate-100">
       <Sidebar />
-      <main className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0 overflow-hidden">{children}</main>
+      <div className="flex-1 flex flex-col min-w-0 pb-16 md:pb-0 overflow-y-auto">
+        <AdminTopBar />
+        <main className="flex-1 p-4 md:p-6 max-w-7xl w-full mx-auto">{children}</main>
+      </div>
       <MobileAdminNav />
     </div>
   )
-
 }
+

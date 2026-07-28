@@ -66,9 +66,8 @@ export default function BackupsPage() {
   const restoreList = Array.isArray(restores) ? restores : (restores as { items?: unknown[] })?.items ?? []
 
   return (
-    <div>
-      <Topbar title="Backup & Restore" backHref="/admin" />
-      <div className="p-4 md:p-6 space-y-5">
+    <div className="space-y-6">
+
 
         {/* Create backup */}
         <Card>
@@ -243,7 +242,7 @@ export default function BackupsPage() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   )
 }
+

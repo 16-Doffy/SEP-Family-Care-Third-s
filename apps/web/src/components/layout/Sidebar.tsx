@@ -101,15 +101,20 @@ function AdminSidebar() {
       )}
     >
       {/* ── Logo header ── */}
-      <div className="flex items-center gap-2.5 px-4 py-[18px] border-b border-[#1e293b] shrink-0 relative">
+      <div className="flex items-center gap-2.5 px-4 py-4 border-b border-slate-800/80 shrink-0 relative bg-slate-900/40">
         <Link href="/admin" className="flex items-center gap-2.5 flex-1 min-w-0">
-          <div className="w-8 h-8 rounded-xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center shrink-0">
-            <span className="text-teal-400 font-bold text-[11px]">SF</span>
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-teal-400 via-teal-500 to-emerald-400 text-slate-950 flex items-center justify-center shrink-0 shadow-lg shadow-teal-500/20 font-black text-xs tracking-wider">
+            FC
           </div>
           {!collapsed && (
-            <span className="font-bold text-[13px] text-white truncate leading-tight tracking-tight">
-              SEPFamilyCare
-            </span>
+            <div className="flex flex-col min-w-0">
+              <span className="font-extrabold text-[14px] text-white truncate leading-tight tracking-tight">
+                Family Care
+              </span>
+              <span className="text-[9px] font-bold text-teal-400 uppercase tracking-widest leading-none mt-0.5">
+                Admin Control
+              </span>
+            </div>
           )}
         </Link>
 
@@ -135,11 +140,11 @@ function AdminSidebar() {
         {navGroups.map(group => (
           <div key={group.label}>
             {!collapsed && (
-              <p className="text-[9.5px] font-bold text-slate-600 uppercase tracking-[0.12em] px-3 mb-2">
+              <p className="text-[9.5px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-[0.15em] px-3 mb-2">
                 {group.label}
               </p>
             )}
-            <div className="space-y-0.5">
+            <div className="space-y-1">
               {group.items.map(({ href, label, icon: Icon, badge }) => {
                 const isActive = href === '/admin'
                   ? pathname === href
@@ -150,15 +155,14 @@ function AdminSidebar() {
                     href={href}
                     title={collapsed ? label : undefined}
                     className={cn(
-                      'flex items-center gap-2.5 py-[7px] rounded-lg text-[13px] font-medium transition-all duration-150 relative group',
-                      'border-l-2',
-                      collapsed ? 'px-3 justify-center' : 'pl-[10px] pr-2',
+                      'flex items-center gap-2.5 py-2 rounded-xl text-[13px] font-medium transition-all duration-200 relative group',
+                      collapsed ? 'px-3 justify-center' : 'px-3',
                       isActive
-                        ? 'bg-[#1e293b] text-white border-teal-400'
-                        : 'text-slate-400 hover:bg-[#1e293b]/70 hover:text-slate-200 border-transparent',
+                        ? 'bg-gradient-to-r from-teal-500/20 to-emerald-500/10 text-teal-300 font-semibold border-l-4 border-teal-400 shadow-sm'
+                        : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200 border-l-4 border-transparent',
                     )}
                   >
-                    <Icon className={cn('w-[16px] h-[16px] shrink-0', isActive ? 'text-teal-400' : '')} />
+                    <Icon className={cn('w-[17px] h-[17px] shrink-0 transition-transform group-hover:scale-110', isActive ? 'text-teal-400' : 'text-slate-400')} />
                     {!collapsed && <span className="truncate flex-1 leading-none">{label}</span>}
                     {!collapsed && badge != null && (
                       <span className="ml-auto min-w-[18px] h-[18px] rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center px-1 shrink-0">
@@ -167,7 +171,7 @@ function AdminSidebar() {
                     )}
                     {/* Tooltip when collapsed */}
                     {collapsed && (
-                      <span className="absolute left-full ml-3 px-2 py-1 bg-[#1e293b] border border-[#334155] text-white text-xs rounded-lg shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                      <span className="absolute left-full ml-3 px-2.5 py-1 bg-[#1e293b] border border-[#334155] text-white text-xs rounded-lg shadow-xl whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
                         {label}
                         {badge != null && (
                           <span className="ml-1.5 bg-rose-500 text-white text-[10px] rounded-full px-1 py-0.5">

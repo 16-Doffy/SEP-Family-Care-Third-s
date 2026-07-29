@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { Topbar } from '@/components/layout/Topbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Server, Database, Activity, HardDrive, Cpu, MemoryStick, Network, RefreshCw, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import {
@@ -34,20 +33,13 @@ function formatUptime(seconds?: number) {
 
 export default function AdminSystemPage() {
   const [selectedContainer, setSelectedContainer] = useState<string | null>(null)
-  const [containerInput, setContainerInput] = useState('')
 
   const { data: health, isLoading: healthLoading } = useAdminSystemHealth()
   const { data: runtime } = useAdminSystemRuntime()
   const { data: host } = useAdminInfraHost()
   const { data: containers, isLoading: containersLoading } = useAdminDockerContainers()
-  const { data: containerStats, isLoading: statsLoading } = useAdminDockerContainerStats(selectedContainer)
+  const { data: containerStats, isLoading: statsLoading, refetch: refetchStats } = useAdminDockerContainerStats(selectedContainer)
   const { data: familiesData } = useAdminFamilies({ limit: 100 })
-
-  const loadLogs = () => {
-    const id = containerInput.trim()
-    if (!id) { toast.error('Nhập container ID hoặc tên'); return }
-    setSelectedContainer(id)
-  }
 
   const apiContainers = containers && Array.isArray((containers as any).items)
     ? (containers as any).items
@@ -115,7 +107,6 @@ export default function AdminSystemPage() {
       const selId = defaultSel.containerId ?? defaultSel.ID ?? defaultSel.name ?? defaultSel.Names
       if (selId) {
         setSelectedContainer(selId)
-        setContainerInput(selId)
       }
     }
   }, [mergedContainers, selectedContainer])
@@ -264,7 +255,6 @@ export default function AdminSystemPage() {
                           key={cId || i}
                           onClick={() => {
                             setSelectedContainer(selectKey)
-                            setContainerInput(selectKey)
                           }}
                           className={`text-xs px-2.5 py-1 rounded-md border transition-all flex items-center gap-1.5 shadow-sm font-medium ${
                             isSelected
@@ -294,7 +284,7 @@ export default function AdminSystemPage() {
                         <p className="text-[9px] text-muted-foreground">Tự động cập nhật mỗi 10 giây</p>
                       </div>
                       
-                      <Button variant="outline" size="sm" onClick={loadLogs} disabled={statsLoading} className="h-8 text-[11px] gap-1 px-2.5">
+                      <Button variant="outline" size="sm" onClick={() => refetchStats()} disabled={statsLoading} className="h-8 text-[11px] gap-1 px-2.5">
                         {statsLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
                         Làm mới
                       </Button>
@@ -319,78 +309,133 @@ export default function AdminSystemPage() {
                           {/* Grid Metrics */}
                           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                             {/* CPU */}
-                            <div className="border rounded-lg p-3 bg-slate-50/50 dark:bg-slate-900/10 space-y-1">
+                            <div className="border rounded-xl p-3.5 bg-gradient-to-br from-slate-50 to-indigo-50/30 dark:from-slate-900/40 dark:to-indigo-950/20 space-y-2 shadow-sm hover:shadow transition-all">
                               <div className="flex items-center justify-between text-muted-foreground">
-                                <span className="text-[10px] font-medium">CPU Usage</span>
-                                <Cpu className="w-3.5 h-3.5 text-violet-500" />
+                                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400">CPU Usage</span>
+                                <Cpu className="w-4 h-4 text-indigo-500" />
                               </div>
-                              <p className="text-base font-bold">{cpuPercent.toFixed(2)}%</p>
+                              <div className="flex items-baseline justify-between">
+                                <p className="text-xl font-bold text-slate-800 dark:text-slate-100">{cpuPercent.toFixed(2)}%</p>
+                                <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${cpuPercent > 80 ? 'bg-rose-100 text-rose-700' : cpuPercent > 50 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                  {cpuPercent > 80 ? 'Cao' : cpuPercent > 50 ? 'Trung bình' : 'Bình thường'}
+                                </span>
+                              </div>
                               <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                                 <div 
-                                  className="bg-violet-600 h-full rounded-full transition-all duration-500" 
+                                  className={`h-full rounded-full transition-all duration-500 ${cpuPercent > 80 ? 'bg-rose-500' : cpuPercent > 50 ? 'bg-amber-500' : 'bg-indigo-600'}`} 
                                   style={{ width: `${Math.min(cpuPercent, 100)}%` }}
                                 />
                               </div>
                             </div>
 
                             {/* RAM */}
-                            <div className="border rounded-lg p-3 bg-slate-50/50 dark:bg-slate-900/10 space-y-1">
+                            <div className="border rounded-xl p-3.5 bg-gradient-to-br from-slate-50 to-emerald-50/30 dark:from-slate-900/40 dark:to-emerald-950/20 space-y-2 shadow-sm hover:shadow transition-all">
                               <div className="flex items-center justify-between text-muted-foreground">
-                                <span className="text-[10px] font-medium">Memory Usage</span>
-                                <MemoryStick className="w-3.5 h-3.5 text-emerald-500" />
+                                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Memory Usage</span>
+                                <MemoryStick className="w-4 h-4 text-emerald-500" />
                               </div>
-                              <p className="text-base font-bold">{memPercent.toFixed(1)}%</p>
-                              <p className="text-[9px] text-muted-foreground truncate">{memUsage.toFixed(1)} MB / {memLimit.toFixed(0)} MB</p>
+                              <div className="flex items-baseline justify-between">
+                                <p className="text-xl font-bold text-slate-800 dark:text-slate-100">{memPercent.toFixed(1)}%</p>
+                                <span className="text-[10px] text-slate-500 font-medium truncate max-w-[100px]">{memUsage.toFixed(1)} MB / {memLimit.toFixed(0)} MB</span>
+                              </div>
                               <div className="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                                 <div 
-                                  className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
+                                  className={`h-full rounded-full transition-all duration-500 ${memPercent > 85 ? 'bg-rose-500' : memPercent > 65 ? 'bg-amber-500' : 'bg-emerald-500'}`} 
                                   style={{ width: `${Math.min(memPercent, 100)}%` }}
                                 />
                               </div>
                             </div>
 
                             {/* Network */}
-                            <div className="border rounded-lg p-3 bg-slate-50/50 dark:bg-slate-900/10 space-y-1">
+                            <div className="border rounded-xl p-3.5 bg-gradient-to-br from-slate-50 to-blue-50/30 dark:from-slate-900/40 dark:to-blue-950/20 space-y-2 shadow-sm hover:shadow transition-all">
                               <div className="flex items-center justify-between text-muted-foreground">
-                                <span className="text-[10px] font-medium">Network I/O</span>
-                                <Network className="w-3.5 h-3.5 text-blue-500" />
+                                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Network I/O</span>
+                                <Network className="w-4 h-4 text-blue-500" />
                               </div>
-                              <div className="space-y-0.5 text-[10px]">
-                                <div className="flex justify-between">
-                                  <span>Nhận (Rx):</span>
-                                  <span className="font-semibold text-right">{netRx.toFixed(1)} MB</span>
+                              <div className="grid grid-cols-2 gap-1 bg-white/70 dark:bg-slate-800/60 p-1.5 rounded-lg border border-slate-100 dark:border-slate-800 text-[11px]">
+                                <div>
+                                  <span className="text-[9px] text-slate-400 block">Nhận (Rx)</span>
+                                  <span className="font-bold text-blue-600 dark:text-blue-400">{netRx.toFixed(1)} MB</span>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span>Gửi (Tx):</span>
-                                  <span className="font-semibold text-right">{netTx.toFixed(1)} MB</span>
+                                <div>
+                                  <span className="text-[9px] text-slate-400 block">Gửi (Tx)</span>
+                                  <span className="font-bold text-indigo-600 dark:text-indigo-400">{netTx.toFixed(1)} MB</span>
                                 </div>
                               </div>
                             </div>
 
                             {/* Block IO */}
-                            <div className="border rounded-lg p-3 bg-slate-50/50 dark:bg-slate-900/10 space-y-1">
+                            <div className="border rounded-xl p-3.5 bg-gradient-to-br from-slate-50 to-amber-50/30 dark:from-slate-900/40 dark:to-amber-950/20 space-y-2 shadow-sm hover:shadow transition-all">
                               <div className="flex items-center justify-between text-muted-foreground">
-                                <span className="text-[10px] font-medium">Disk I/O</span>
-                                <HardDrive className="w-3.5 h-3.5 text-orange-500" />
+                                <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400">Disk I/O</span>
+                                <HardDrive className="w-4 h-4 text-amber-500" />
                               </div>
-                              <div className="space-y-0.5 text-[10px]">
-                                <div className="flex justify-between">
-                                  <span>Đọc:</span>
-                                  <span className="font-semibold text-right">{ioRead.toFixed(1)} MB</span>
+                              <div className="grid grid-cols-2 gap-1 bg-white/70 dark:bg-slate-800/60 p-1.5 rounded-lg border border-slate-100 dark:border-slate-800 text-[11px]">
+                                <div>
+                                  <span className="text-[9px] text-slate-400 block">Đọc (Read)</span>
+                                  <span className="font-bold text-amber-600 dark:text-amber-400">{ioRead.toFixed(1)} MB</span>
                                 </div>
-                                <div className="flex justify-between">
-                                  <span>Ghi:</span>
-                                  <span className="font-semibold text-right">{ioWrite.toFixed(1)} MB</span>
+                                <div>
+                                  <span className="text-[9px] text-slate-400 block">Ghi (Write)</span>
+                                  <span className="font-bold text-orange-600 dark:text-orange-400">{ioWrite.toFixed(1)} MB</span>
                                 </div>
                               </div>
                             </div>
                           </div>
 
-                          {/* Full JSON display */}
+                          {/* Detail Container Card */}
+                          <div className="bg-slate-50/80 dark:bg-slate-900/50 rounded-xl p-3.5 border border-slate-200/70 dark:border-slate-800 text-xs space-y-2">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                <span className="font-semibold text-slate-700 dark:text-slate-200">ID Container:</span>
+                                <code className="font-mono text-[11px] text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/50 px-2 py-0.5 rounded border border-violet-100 dark:border-violet-900 select-all">
+                                  {selectedContainer}
+                                </code>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(selectedContainer)
+                                  toast.success('Đã sao chép Container ID')
+                                }}
+                                className="h-6 text-[10px] px-2 text-slate-500 hover:text-slate-800"
+                              >
+                                Sao chép ID
+                              </Button>
+                            </div>
+                          </div>
+
+                          {/* Collapsible JSON Debug Drawer */}
                           {containerStats != null && (
-                            <pre className="max-h-64 overflow-auto rounded-lg bg-slate-950 p-3 text-[10px] text-slate-100 whitespace-pre-wrap font-mono">
-                              {JSON.stringify(containerStats, null, 2)}
-                            </pre>
+                            <details className="group border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-slate-900 text-slate-100 transition-all">
+                              <summary className="flex items-center justify-between px-4 py-2.5 bg-slate-950 cursor-pointer select-none text-[11px] font-medium text-slate-400 hover:text-slate-200 transition-colors">
+                                <span className="flex items-center gap-2">
+                                  <span className="font-mono text-violet-400">{'{ }'}</span>
+                                  <span>Dữ liệu JSON kỹ thuật (Debug Response)</span>
+                                </span>
+                                <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 group-open:bg-violet-900/50 group-open:text-violet-300 transition-all">
+                                  Bấm để mở / đóng
+                                </span>
+                              </summary>
+                              <div className="p-3 border-t border-slate-800 relative">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    navigator.clipboard.writeText(JSON.stringify(containerStats, null, 2))
+                                    toast.success('Đã sao chép JSON')
+                                  }}
+                                  className="absolute top-5 right-5 h-6 text-[10px] px-2 bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700"
+                                >
+                                  Copy JSON
+                                </Button>
+                                <pre className="max-h-60 overflow-auto text-[10px] text-emerald-400 font-mono leading-relaxed pr-24">
+                                  {JSON.stringify(containerStats, null, 2)}
+                                </pre>
+                              </div>
+                            </details>
                           )}
                         </div>
                       )
@@ -401,27 +446,6 @@ export default function AdminSystemPage() {
                     )}
                   </div>
                 )}
-
-                {/* Fallback Manual Input */}
-                <div className="border-t pt-2">
-                  <details className="group">
-                    <summary className="text-[11px] text-muted-foreground hover:text-foreground cursor-pointer select-none font-medium flex items-center gap-1">
-                      <span className="transition-transform group-open:rotate-90">▶</span> Nhập container ID / tên thủ công (Dự phòng)
-                    </summary>
-                    <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                      <Input
-                        value={containerInput}
-                        onChange={(e) => setContainerInput(e.target.value)}
-                        placeholder="Nhập Container ID hoặc tên..."
-                        className="flex-1 h-8 text-xs"
-                      />
-                      <Button size="sm" variant="outline" onClick={loadLogs} disabled={statsLoading} className="h-8 text-xs gap-1.5">
-                        {statsLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
-                        Xem stats
-                      </Button>
-                    </div>
-                  </details>
-                </div>
               </div>
             )}
           </CardContent>

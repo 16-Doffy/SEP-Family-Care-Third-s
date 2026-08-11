@@ -6,13 +6,13 @@ import { usePathname } from 'next/navigation'
 import {
   Home, Wallet, Settings, Users, LogOut, Crown, UserCircle,
   TrendingUp, ClipboardList, Archive, GitBranch, LayoutDashboard,
-  ChevronLeft, ChevronRight, Server,
+  ChevronLeft, ChevronRight, Server, Mail,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
 import { useRouter } from 'next/navigation'
 import { api } from '@/lib/api'
-import { useAdminUsers, useAdminSystemHealth } from '@/hooks/useAdmin'
+import { useAdminUsers, useAdminSystemHealth, useAdminJoinRequests } from '@/hooks/useAdmin'
 
 type NavItem = {
   href: string
@@ -45,8 +45,10 @@ function AdminSidebar() {
   // Live badge data from real APIs
   const { data: suspendedData } = useAdminUsers({ accountStatus: 'SUSPENDED', limit: 1 })
   const { data: healthData } = useAdminSystemHealth()
+  const { data: pendingJoinData } = useAdminJoinRequests({ status: 'PENDING', limit: 1 })
 
   const suspendedCount = suspendedData?.total ?? 0
+  const pendingJoinCount = pendingJoinData?.total ?? 0
   const isHealthBad = !!healthData?.status && healthData.status !== 'ok' && healthData.status !== 'UP'
 
   const navGroups: AdminNavGroup[] = [
@@ -56,6 +58,7 @@ function AdminSidebar() {
         { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
         { href: '/admin/users', label: 'Người dùng', icon: UserCircle },
         { href: '/admin/families', label: 'Gia đình', icon: Home },
+        { href: '/admin/invitations', label: 'Yêu cầu gia nhập', icon: Mail, badge: pendingJoinCount > 0 ? pendingJoinCount : null },
         { href: '/admin/revenue', label: 'Doanh thu', icon: TrendingUp },
       ],
     },

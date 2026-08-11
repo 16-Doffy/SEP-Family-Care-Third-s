@@ -23,48 +23,34 @@ import { Check, Loader2, Crown } from 'lucide-react'
 import { startCheckout } from '@/lib/payments'
 import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
+import type { SubscriptionPlan } from '@/hooks/useAdmin'
 
-/**
- * Thông tin một gói thuê bao trả về từ API `/admin/plans`.
- * @property billingPeriod - Current MVP treats paid plans as annual-only.
- * @property maxMembers - Giới hạn thành viên; `null` nghĩa là không giới hạn
- * @property maxTasksPerMonth - Giới hạn nhiệm vụ mỗi tháng; `null` nghĩa là không giới hạn
- * @property features - Danh sách tính năng hiển thị dạng bullet list
- */
-interface Plan {
-  id: string
-  code: string
-  name: string
-  description: string | null
-  price: number | string
-  currency: string
-  billingPeriod: string
-  durationDays: number | null
-  maxMembers: number | null
-  maxTasksPerMonth: number | null
-  albumStorageMb: number | null
-  systemStorageMb: number | null
-  aiEnabled: boolean
-  aiFinanceEnabled: boolean
-  advancedReports: boolean
-  prioritySupport: boolean
-  tier: number
-  features: string[]
-  isActive: boolean
+/** true nếu gói là gói miễn phí (billingPeriod FREE hoặc không có giá). */
+function isFreePlan(p: SubscriptionPlan) {
+  const period = p.billingPeriod ?? (p.planCode === 'FREE' ? 'FREE' : undefined)
+  return period === 'FREE' || (Number(p.monthlyPrice ?? 0) === 0 && Number(p.yearlyPrice ?? p.annualPrice ?? 0) === 0)
+}
+
+/** Đếm số tính năng được bật trong featureAccess. */
+function featureCount(p: SubscriptionPlan) {
+  return p.featureAccess ? Object.values(p.featureAccess).filter(Boolean).length : 0
 }
 
 /**
  * Định dạng giá tiền và chu kỳ thanh toán thành chuỗi hiển thị thân thiện.
- * Gói miễn phí (price = 0) trả về `'Miễn phí'`.
+ * Gói miễn phí trả về `'Miễn phí'`; gói tháng hiển thị `/tháng`, còn lại `/năm`.
  *
- * @param p - Đối tượng gói thuê bao
- * @returns User-facing annual-first price string.
+ * @param p - Đối tượng gói thuê bao (shape BE live)
+ * @returns User-facing price string.
  */
-function formatPrice(p: Plan) {
-  const n = typeof p.price === 'string' ? Number(p.price) : p.price
-  if (n === 0) return 'Miễn phí'
-  const suffix = p.billingPeriod === 'LIFETIME' ? ' vĩnh viễn' : p.billingPeriod === 'FREE' ? '' : '/năm'
-  return `${n.toLocaleString('vi-VN')} ${p.currency}${suffix}`
+function formatPrice(p: SubscriptionPlan) {
+  if (isFreePlan(p)) return 'Miễn phí'
+  const period = p.billingPeriod ?? 'YEARLY'
+  if (period === 'MONTHLY') {
+    return `${Number(p.monthlyPrice ?? 0).toLocaleString('vi-VN')} VND/tháng`
+  }
+  const yearly = Number(p.yearlyPrice ?? p.annualPrice ?? 0)
+  return `${yearly.toLocaleString('vi-VN')} VND/năm`
 }
 
 /**
@@ -87,10 +73,11 @@ export function UpgradePlanDialog({
   /** ID gói đang được xử lý thanh toán, dùng để hiển thị spinner đúng nút */
   const [pendingId, setPendingId] = useState<string | null>(null)
 
-  /** Tải danh sách gói từ API, chỉ khi dialog đang mở */
-  const { data: plans = [], isLoading } = useQuery<Plan[]>({
+  /** Tải danh sách gói đang hoạt động cho subscriber, chỉ khi dialog đang mở */
+  const { data: plans = [], isLoading } = useQuery<SubscriptionPlan[]>({
     queryKey: ['public-plans'],
-    queryFn: () => api.get('/admin/plans').then((r) => r.data.plans).catch(() => []),
+    // GET /subscription-plans trả envelope { data: SubscriptionPlan[] } (chỉ gói active)
+    queryFn: () => api.get('/subscription-plans').then((r) => (r.data?.data ?? []) as SubscriptionPlan[]).catch(() => []),
     enabled: open, // Chỉ fetch khi dialog mở để tránh request thừa
   })
 
@@ -137,7 +124,8 @@ export function UpgradePlanDialog({
             {/* Chỉ hiển thị các gói đang hoạt động */}
             {plans.filter((p) => p.isActive).map((p) => {
               const isCurrent = currentPlanId === p.id
-              const isFree = Number(p.price) === 0
+              const isFree = isFreePlan(p)
+              const nFeatures = featureCount(p)
               return (
                 <div
                   key={p.id}
@@ -153,7 +141,7 @@ export function UpgradePlanDialog({
                       {isCurrent && <Badge>Gói hiện tại</Badge>}
                     </div>
                     <p className="text-2xl font-bold text-blue-600 mt-1">{formatPrice(p)}</p>
-                    {p.description && <p className="text-xs text-muted-foreground mt-1">{p.description}</p>}
+                    <p className="text-[11px] text-muted-foreground mt-1 font-mono">{p.planCode}</p>
                   </div>
 
                   <div className="text-sm space-y-1.5 flex-1">
@@ -161,21 +149,17 @@ export function UpgradePlanDialog({
                     <div className="text-xs text-muted-foreground space-y-0.5">
                       <div>
                         {p.maxMembers == null ? '∞ thành viên' : `Tối đa ${p.maxMembers} thành viên`}
-                        {' · '}
-                        {p.maxTasksPerMonth == null ? '∞ task/tháng' : `${p.maxTasksPerMonth} task/tháng`}
                       </div>
                       <div>
-                        Album: {p.albumStorageMb == null ? '∞' : p.albumStorageMb >= 1024 ? `${(p.albumStorageMb / 1024).toFixed(0)}GB` : `${p.albumStorageMb}MB`}
-                        {p.aiEnabled && ' · AI ✓'}
-                        {p.aiFinanceEnabled && ' · AI tài chính ✓'}
+                        Dung lượng: {p.storageLimit >= 1024 ? `${(p.storageLimit / 1024).toFixed(0)} GB` : `${p.storageLimit} MB`}
                       </div>
                     </div>
-                    {p.features.map((f, i) => (
-                      <div key={i} className="flex items-start gap-1.5 text-gray-700">
+                    {nFeatures > 0 && (
+                      <div className="flex items-start gap-1.5 text-gray-700">
                         <Check className="w-4 h-4 text-green-600 shrink-0 mt-0.5" />
-                        <span>{f}</span>
+                        <span>{nFeatures} tính năng cao cấp</span>
                       </div>
-                    ))}
+                    )}
                   </div>
 
                   <Button

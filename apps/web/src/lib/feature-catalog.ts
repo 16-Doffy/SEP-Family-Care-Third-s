@@ -66,7 +66,13 @@ export const KNOWN_FEATURES: FeatureCatalogEntry[] = [
   { key: 'ai.savingSuggestions', label: 'Gợi ý tiết kiệm AI', description: 'Gợi ý tối ưu chi tiêu', group: 'Trợ lý AI', tier: 'ai', available: false, configurable: false },
   { key: 'sos.wearablePairing', label: 'Kết nối thiết bị đeo', description: 'Ghép thiết bị đeo', group: 'SOS và an toàn', tier: 'advanced' },
   { key: 'sos.fallDetection', label: 'Phát hiện té ngã', description: 'Tự động cảnh báo khi phát hiện té ngã', group: 'SOS và an toàn', tier: 'advanced' },
-  { key: 'sos.liveLocation', label: 'SOS vị trí trực tiếp', description: 'Chia sẻ vị trí trực tiếp khi có cảnh báo', group: 'SOS và an toàn', tier: 'core' },
+  // BE xác nhận 2026-08-18: chỉ gửi vị trí 1 LẦN lúc tạo cảnh báo là miễn phí
+  // (không key nào khoá việc này — luôn chạy trong luồng tạo SOS). Key này là
+  // THEO DÕI LIÊN TỤC trong lúc cảnh báo còn mở (`_startLocationStreaming`,
+  // đẩy GPS định kỳ) — BE xếp vào nhóm tạo giá trị trả phí rõ nhất, không
+  // phải cơ bản. Trước đó xếp `core` vì lý do an toàn; đổi lại theo đúng
+  // quyết định kinh doanh đã xác nhận rõ của BE.
+  { key: 'sos.liveLocation', label: 'SOS vị trí trực tiếp', description: 'Theo dõi vị trí liên tục trong lúc cảnh báo còn mở', group: 'SOS và an toàn', tier: 'advanced' },
   { key: 'sos.routeHistory', label: 'Lịch sử hành trình', description: 'Xem lại lịch sử vị trí nhiều ngày', group: 'SOS và an toàn', tier: 'advanced' },
   { key: 'chat.privateChat', label: 'Chat riêng tư', description: 'Nhắn tin riêng', group: 'Nhắn tin', tier: 'core' },
   { key: 'chat.attachments', label: 'Đính kèm chat', description: 'Gửi file và media', group: 'Nhắn tin', tier: 'core' },

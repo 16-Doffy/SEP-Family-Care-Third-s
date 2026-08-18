@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { getInitials } from '@/lib/utils'
+import { statusLabel } from '@/lib/status-labels'
 
 const ROLE_LABEL: Record<string, string> = {
   FAMILY_MANAGER: 'Family Manager',
@@ -67,7 +68,7 @@ export default function SettingsPage() {
               <div className="flex justify-between"><span className="text-muted-foreground">Tên gia đình</span><span className="font-medium">{family.name}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Vai trò</span><span className="font-medium">{member ? (ROLE_LABEL[member.familyRole] ?? '—') : '—'}</span></div>
               <div className="flex justify-between"><span className="text-muted-foreground">Số thành viên</span><span className="font-medium">{family.members?.length ?? 0}</span></div>
-              <div className="flex justify-between"><span className="text-muted-foreground">Trạng thái</span><Badge variant="outline">{family.status}</Badge></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Trạng thái</span><Badge variant="outline">{statusLabel(family.status)}</Badge></div>
             </CardContent>
           </Card>
         )}

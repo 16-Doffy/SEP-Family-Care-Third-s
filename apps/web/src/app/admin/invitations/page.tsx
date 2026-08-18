@@ -9,6 +9,7 @@ import toast from 'react-hot-toast'
 import { formatDate } from '@/lib/utils'
 import { getApiErrorMessage } from '@/lib/api'
 import { useAdminJoinRequests, useDeleteAdminJoinRequest } from '@/hooks/useAdmin'
+import { statusLabel } from '@/lib/status-labels'
 
 const STATUS_FILTERS = ['ALL', 'PENDING', 'APPROVED', 'REJECTED', 'CANCELED'] as const
 type StatusFilter = (typeof STATUS_FILTERS)[number]
@@ -93,7 +94,7 @@ export default function AdminInvitationsPage() {
                           {req.createdAt && <p className="text-[11px] text-muted-foreground mt-1">{formatDate(req.createdAt)}</p>}
                         </div>
                         <Badge variant={STATUS_BADGE[req.status] ?? 'secondary'} className="text-[10px] shrink-0">
-                          {req.status}
+                          {statusLabel(req.status, 'invitation')}
                         </Badge>
                       </div>
                       <div className="flex gap-2 justify-end">
@@ -147,7 +148,7 @@ export default function AdminInvitationsPage() {
                           </td>
                           <td className="py-2.5 text-muted-foreground text-xs">{req.createdAt ? formatDate(req.createdAt) : '—'}</td>
                           <td className="py-2.5">
-                            <Badge variant={STATUS_BADGE[req.status] ?? 'secondary'} className="text-[10px]">{req.status}</Badge>
+                            <Badge variant={STATUS_BADGE[req.status] ?? 'secondary'} className="text-[10px]">{statusLabel(req.status, 'invitation')}</Badge>
                           </td>
                           <td className="py-2.5 pr-4">
                             <Button

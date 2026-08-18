@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { Pencil, Trash2, Plus, HardDrive, Users, Loader2, CreditCard, BadgePercent, CalendarDays } from 'lucide-react'
+import { Pencil, Trash2, Plus, HardDrive, Users, Loader2, CreditCard, BadgePercent, CalendarDays, Tag } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getApiErrorMessage } from '@/lib/api'
 import {
@@ -19,35 +19,54 @@ import {
  * Danh sách key featureAccess chính thức theo Swagger.
  * FE chỉ gửi giá trị boolean từ danh sách này; key legacy từ dữ liệu cũ vẫn được
  * giữ nguyên khi PATCH để không làm mất cấu hình đã lưu.
+ *
+ * `group` chỉ để xếp nhóm trong giao diện. `tier` là gợi ý đóng gói, hiện thành
+ * nhãn cạnh mỗi dòng để admin biết nên bật gì cho gói nào:
+ * `core` = vòng lặp lõi, gói miễn phí cũng phải có (tắt là người dùng không tạo
+ * được sự kiện lịch, không nhắn tin được); `advanced` = tự động hoá và lưu trữ
+ * nặng; `ai` = tốn chi phí gọi mô hình mỗi lần dùng.
  */
-const KNOWN_FEATURES: { key: string; label: string; description: string }[] = [
-  { key: 'calendar.enabled', label: 'Lịch gia đình', description: 'Tạo, sửa và hủy sự kiện lịch' },
-  { key: 'calendar.reminders', label: 'Nhắc lịch', description: 'Bật/tắt reminder cho sự kiện' },
-  { key: 'calendar.recurringEvents', label: 'Lịch lặp lại', description: 'Tạo sự kiện lịch định kỳ' },
-  { key: 'finance.budgetPlanning', label: 'Lập kế hoạch ngân sách', description: 'Lập ngân sách chi tiêu' },
-  { key: 'finance.financialGoals', label: 'Mục tiêu tài chính', description: 'Theo dõi mục tiêu tiết kiệm' },
-  { key: 'finance.budgetAlerts', label: 'Cảnh báo ngân sách', description: 'Cảnh báo vượt ngân sách' },
-  { key: 'finance.supportRequests', label: 'Yêu cầu hỗ trợ chi tiêu', description: 'Quy trình xin hỗ trợ tài chính' },
-  { key: 'finance.reportExport', label: 'Xuất báo cáo tài chính', description: 'Báo cáo và xuất dữ liệu nâng cao' },
-  { key: 'finance.aiOcrSuggestion', label: 'Gợi ý AI/OCR tài chính', description: 'Đọc và gợi ý dữ liệu giao dịch' },
-  { key: 'tasks.recurringTasks', label: 'Công việc lặp lại', description: 'Thiết lập công việc định kỳ' },
-  { key: 'tasks.proofUpload', label: 'Bằng chứng công việc', description: 'Tải bằng chứng hoàn thành' },
-  { key: 'tasks.rewardSettlement', label: 'Quyết toán phần thưởng', description: 'Quyết toán và tranh chấp phần thưởng' },
-  { key: 'tasks.rewardAllocation', label: 'Phân bổ phần thưởng', description: 'Phân bổ phần thưởng công việc' },
-  { key: 'album.videoUpload', label: 'Tải video album', description: 'Cho phép lưu video album' },
-  { key: 'album.faceSuggestions', label: 'Gợi ý khuôn mặt AI', description: 'AI gợi ý thành viên trong ảnh; người dùng xác nhận tag' },
-  { key: 'ai.assistant', label: 'Trợ lý AI', description: 'Trợ lý AI trong ứng dụng' },
-  { key: 'ai.financeSummary', label: 'Tóm tắt tài chính AI', description: 'Tóm tắt tình hình tài chính' },
-  { key: 'ai.taskSummary', label: 'Tóm tắt công việc AI', description: 'Tóm tắt tiến độ công việc' },
-  { key: 'ai.savingSuggestions', label: 'Gợi ý tiết kiệm AI', description: 'Gợi ý tối ưu chi tiêu' },
-  { key: 'sos.wearablePairing', label: 'Kết nối thiết bị đeo', description: 'Ghép thiết bị đeo' },
-  { key: 'sos.fallDetection', label: 'Phát hiện té ngã', description: 'Cảnh báo té ngã' },
-  { key: 'sos.liveLocation', label: 'SOS vị trí trực tiếp', description: 'Chia sẻ vị trí trực tiếp khi SOS' },
-  { key: 'sos.routeHistory', label: 'Lịch sử hành trình', description: 'Xem lịch sử vị trí nâng cao' },
-  { key: 'chat.privateChat', label: 'Chat riêng tư', description: 'Nhắn tin riêng' },
-  { key: 'chat.attachments', label: 'Đính kèm chat', description: 'Gửi file và media' },
-  { key: 'chat.announcements', label: 'Thông báo gia đình', description: 'Đăng thông báo gia đình' },
+type FeatureTier = 'core' | 'advanced' | 'ai'
+
+const KNOWN_FEATURES: { key: string; label: string; description: string; group: string; tier: FeatureTier }[] = [
+  { key: 'calendar.enabled', label: 'Lịch gia đình', description: 'Tạo, sửa và hủy sự kiện lịch', group: 'Lịch gia đình', tier: 'core' },
+  { key: 'calendar.reminders', label: 'Nhắc lịch', description: 'Nhắc trước giờ diễn ra sự kiện', group: 'Lịch gia đình', tier: 'advanced' },
+  { key: 'calendar.recurringEvents', label: 'Lịch lặp lại', description: 'Tạo sự kiện lịch định kỳ', group: 'Lịch gia đình', tier: 'advanced' },
+  { key: 'finance.budgetPlanning', label: 'Lập kế hoạch ngân sách', description: 'Lập ngân sách chi tiêu', group: 'Tài chính', tier: 'advanced' },
+  { key: 'finance.financialGoals', label: 'Mục tiêu tài chính', description: 'Theo dõi mục tiêu tiết kiệm', group: 'Tài chính', tier: 'advanced' },
+  { key: 'finance.budgetAlerts', label: 'Cảnh báo ngân sách', description: 'Cảnh báo vượt ngân sách', group: 'Tài chính', tier: 'advanced' },
+  { key: 'finance.supportRequests', label: 'Yêu cầu hỗ trợ chi tiêu', description: 'Quy trình xin hỗ trợ tài chính', group: 'Tài chính', tier: 'core' },
+  { key: 'finance.reportExport', label: 'Xuất báo cáo tài chính', description: 'Báo cáo và xuất dữ liệu nâng cao', group: 'Tài chính', tier: 'advanced' },
+  { key: 'finance.aiOcrSuggestion', label: 'Quét hoá đơn bằng AI', description: 'Đọc hoá đơn và gợi ý dữ liệu giao dịch', group: 'Tài chính', tier: 'ai' },
+  { key: 'tasks.recurringTasks', label: 'Công việc lặp lại', description: 'Thiết lập công việc định kỳ', group: 'Nhiệm vụ và phần thưởng', tier: 'advanced' },
+  { key: 'tasks.proofUpload', label: 'Bằng chứng công việc', description: 'Tải bằng chứng hoàn thành', group: 'Nhiệm vụ và phần thưởng', tier: 'core' },
+  { key: 'tasks.rewardSettlement', label: 'Quyết toán phần thưởng', description: 'Quyết toán và tranh chấp phần thưởng', group: 'Nhiệm vụ và phần thưởng', tier: 'core' },
+  { key: 'tasks.rewardAllocation', label: 'Phân bổ phần thưởng', description: 'Phân bổ phần thưởng công việc', group: 'Nhiệm vụ và phần thưởng', tier: 'core' },
+  { key: 'album.videoUpload', label: 'Tải video album', description: 'Cho phép lưu video album', group: 'Album', tier: 'advanced' },
+  { key: 'album.faceSuggestions', label: 'Gợi ý khuôn mặt AI', description: 'AI gợi ý thành viên trong ảnh; người dùng xác nhận tag', group: 'Album', tier: 'ai' },
+  { key: 'ai.assistant', label: 'Trợ lý AI', description: 'Trợ lý AI trong ứng dụng', group: 'Trợ lý AI', tier: 'ai' },
+  { key: 'ai.financeSummary', label: 'Tóm tắt tài chính AI', description: 'Tóm tắt tình hình tài chính', group: 'Trợ lý AI', tier: 'ai' },
+  { key: 'ai.taskSummary', label: 'Tóm tắt công việc AI', description: 'Tóm tắt tiến độ công việc', group: 'Trợ lý AI', tier: 'ai' },
+  { key: 'ai.savingSuggestions', label: 'Gợi ý tiết kiệm AI', description: 'Gợi ý tối ưu chi tiêu', group: 'Trợ lý AI', tier: 'ai' },
+  { key: 'sos.wearablePairing', label: 'Kết nối thiết bị đeo', description: 'Ghép thiết bị đeo', group: 'SOS và an toàn', tier: 'advanced' },
+  { key: 'sos.fallDetection', label: 'Phát hiện té ngã', description: 'Tự động cảnh báo khi phát hiện té ngã', group: 'SOS và an toàn', tier: 'advanced' },
+  { key: 'sos.liveLocation', label: 'SOS vị trí trực tiếp', description: 'Chia sẻ vị trí trực tiếp khi có cảnh báo', group: 'SOS và an toàn', tier: 'core' },
+  { key: 'sos.routeHistory', label: 'Lịch sử hành trình', description: 'Xem lại lịch sử vị trí nhiều ngày', group: 'SOS và an toàn', tier: 'advanced' },
+  { key: 'chat.privateChat', label: 'Chat riêng tư', description: 'Nhắn tin riêng', group: 'Nhắn tin', tier: 'core' },
+  { key: 'chat.attachments', label: 'Đính kèm chat', description: 'Gửi file và media', group: 'Nhắn tin', tier: 'core' },
+  { key: 'chat.announcements', label: 'Thông báo gia đình', description: 'Đăng thông báo gia đình', group: 'Nhắn tin', tier: 'core' },
 ]
+
+/** Thứ tự nhóm hiện trên giao diện, lấy theo thứ tự key xuất hiện ở trên. */
+const FEATURE_GROUPS = Array.from(new Set(KNOWN_FEATURES.map((f) => f.group)))
+
+const TIER_META: Record<FeatureTier, { label: string; hint: string; className: string }> = {
+  core: { label: 'Cơ bản', hint: 'nên bật cho mọi gói, kể cả gói miễn phí', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
+  advanced: { label: 'Nâng cao', hint: 'tự động hoá, lưu trữ nặng, thiết bị rời', className: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
+  ai: { label: 'Dùng AI', hint: 'tốn chi phí gọi mô hình mỗi lần dùng', className: 'bg-amber-50 text-amber-700 border-amber-200' },
+}
+
+const CORE_FEATURE_KEYS = KNOWN_FEATURES.filter((f) => f.tier === 'core').map((f) => f.key)
 
 function featureLabel(key: string) {
   return KNOWN_FEATURES.find((f) => f.key === key)?.label ?? key
@@ -154,6 +173,23 @@ export default function PlansAdminPage() {
   const toggleFeature = (key: string) =>
     setForm((prev) => ({ ...prev, features: { ...prev.features, [key]: !prev.features[key] } }))
 
+  const setGroupFeatures = (keys: string[], on: boolean) =>
+    setForm((prev) => ({
+      ...prev,
+      features: { ...prev.features, ...Object.fromEntries(keys.map((k) => [k, on])) },
+    }))
+
+  /** Preset để admin khỏi tick tay 26 ô mỗi lần tạo gói. */
+  const applyPreset = (preset: 'core' | 'all' | 'none') =>
+    setForm((prev) => ({
+      ...prev,
+      features: Object.fromEntries(
+        KNOWN_FEATURES.map((f) => [f.key, preset === 'all' || (preset === 'core' && f.tier === 'core')]),
+      ),
+    }))
+
+  const enabledFeatureCount = KNOWN_FEATURES.filter((f) => form.features[f.key]).length
+
   const validate = (): boolean => {
     if (!form.planCode.trim()) { toast.error('Mã gói không được để trống'); return false }
     if (!PLAN_CODE_RE.test(form.planCode)) { toast.error('Mã gói chỉ dùng chữ HOA, số, dấu _'); return false }
@@ -232,7 +268,6 @@ export default function PlansAdminPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <CardTitle className="text-base truncate">{p.name}</CardTitle>
-                      <Badge variant="outline" className="text-[10px] font-mono shrink-0">{p.planCode}</Badge>
                     </div>
                     <div className="flex gap-0.5 shrink-0">
                       <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(p)}>
@@ -248,6 +283,11 @@ export default function PlansAdminPage() {
                   <PriceSummary plan={p} plans={plans} />
 
                   <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+                    {/* planCode là định danh kỹ thuật (mobile gửi lên khi checkout), không phải nhãn
+                        cho người đọc — để cùng hàng với Stripe Price ID thay vì làm badge trên tiêu đề. */}
+                    <span className="flex items-center gap-1">
+                      <Tag className="w-3 h-3" />Mã gói: <span className="font-mono">{p.planCode}</span>
+                    </span>
                     <span className="flex items-center gap-1">
                       <HardDrive className="w-3 h-3" />{p.storageLimit} MB
                     </span>
@@ -393,32 +433,93 @@ export default function PlansAdminPage() {
               </div>
             </div>
 
-            {/* featureAccess checkboxes */}
-            <div className="space-y-1.5">
-              <Label>Tính năng bật/tắt</Label>
-              <p className="text-[11px] text-muted-foreground">
-                Key gửi lên BE: <code className="bg-muted px-1 rounded">featureAccess</code> — map key→boolean.
-              </p>
-              {legacyFeatureKeys.length > 0 && (
+            {/* Tính năng của gói */}
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label>Tính năng của gói</Label>
+                <span className="text-xs text-muted-foreground">
+                  Đã bật <span className="font-semibold text-foreground tabular-nums">{enabledFeatureCount}</span>/{KNOWN_FEATURES.length} tính năng
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[11px] text-muted-foreground">Chọn nhanh:</span>
+                <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={() => applyPreset('core')}>
+                  Gói miễn phí ({CORE_FEATURE_KEYS.length} tính năng cơ bản)
+                </Button>
+                <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={() => applyPreset('all')}>
+                  Gói trả phí (tất cả)
+                </Button>
+                <Button type="button" size="sm" variant="ghost" className="h-7 text-xs" onClick={() => applyPreset('none')}>
+                  Bỏ chọn hết
+                </Button>
+              </div>
+
+              {enabledFeatureCount === 0 && (
                 <p className="text-[11px] leading-snug text-amber-700">
-                  Key legacy ({legacyFeatureKeys.join(', ')}) không thuộc contract mới và sẽ không được gửi lại. Hãy chọn quyền chuẩn bên dưới trước khi lưu.
+                  Gói chưa bật tính năng nào. Người dùng gói này sẽ không tạo được sự kiện lịch và không dùng được các thao tác cơ bản khác — bấm “Gói miễn phí” ở trên để bật nhóm cơ bản.
                 </p>
               )}
-              <div className="border rounded-md divide-y">
-                {KNOWN_FEATURES.map((f) => (
-                  <label key={f.key} className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/40 transition-colors">
-                    <input
-                      type="checkbox"
-                      className="w-4 h-4 accent-violet-600 shrink-0"
-                      checked={!!form.features[f.key]}
-                      onChange={() => toggleFeature(f.key)}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium leading-none">{f.label}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{f.description}</p>
+              {legacyFeatureKeys.length > 0 && (
+                <p className="text-[11px] leading-snug text-amber-700">
+                  Gói này còn {legacyFeatureKeys.length} quyền kiểu cũ không còn dùng nữa và sẽ bị bỏ khi lưu. Hãy chọn lại quyền trong danh sách bên dưới.
+                </p>
+              )}
+
+              <div className="border rounded-md overflow-hidden">
+                {FEATURE_GROUPS.map((group) => {
+                  const items = KNOWN_FEATURES.filter((f) => f.group === group)
+                  const onCount = items.filter((f) => form.features[f.key]).length
+                  const allOn = onCount === items.length
+                  return (
+                    <div key={group} className="border-b last:border-b-0">
+                      <div className="flex items-center justify-between gap-2 bg-muted/60 px-3 py-1.5">
+                        <span className="text-xs font-semibold">{group}</span>
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-[11px] text-muted-foreground tabular-nums">{onCount}/{items.length}</span>
+                          <button
+                            type="button"
+                            className="text-[11px] font-medium text-violet-700 hover:underline"
+                            onClick={() => setGroupFeatures(items.map((i) => i.key), !allOn)}
+                          >
+                            {allOn ? 'Bỏ cả nhóm' : 'Chọn cả nhóm'}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="divide-y">
+                        {items.map((f) => (
+                          <label
+                            key={f.key}
+                            title={`Mã kỹ thuật: ${f.key}`}
+                            className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/40 transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 accent-violet-600 shrink-0"
+                              checked={!!form.features[f.key]}
+                              onChange={() => toggleFeature(f.key)}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium leading-none">{f.label}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{f.description}</p>
+                            </div>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${TIER_META[f.tier].className}`}>
+                              {TIER_META[f.tier].label}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
                     </div>
-                    <code className="text-[10px] text-muted-foreground bg-muted px-1 rounded shrink-0">{f.key}</code>
-                  </label>
+                  )
+                })}
+              </div>
+
+              <div className="flex flex-wrap gap-x-4 gap-y-1 pt-0.5">
+                {(Object.keys(TIER_META) as FeatureTier[]).map((tier) => (
+                  <span key={tier} className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <span className={`px-1.5 py-0.5 rounded border ${TIER_META[tier].className}`}>{TIER_META[tier].label}</span>
+                    {TIER_META[tier].hint}
+                  </span>
                 ))}
               </div>
             </div>

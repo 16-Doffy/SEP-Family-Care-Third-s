@@ -21,6 +21,7 @@ import type { NameType, ValueType } from 'recharts/types/component/DefaultToolti
 import { useAdminRevenueSummary, useAdminPayments, useAdminFamilies } from '@/hooks/useAdmin'
 import type { AdminFamily } from '@/hooks/useAdmin'
 import { formatDate } from '@/lib/utils'
+import { statusLabel } from '@/lib/status-labels'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -491,7 +492,7 @@ export default function RevenueAdminPage() {
                         <td className="py-2 font-medium text-green-700 text-xs">{fmtVND(p.amount)}</td>
                         <td className="py-2">
                           <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${PAY_STATUS_CLS[p.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                            {p.status}
+                            {statusLabel(p.status, 'payment')}
                           </span>
                         </td>
                         <td className="py-2 pr-4 text-xs text-muted-foreground">{p.createdAt ? formatDate(p.createdAt) : '—'}</td>

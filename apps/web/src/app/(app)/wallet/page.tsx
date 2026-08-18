@@ -32,6 +32,7 @@ import {
   type FinanceModel, type FinanceJar, type LedgerEntryType,
 } from '@/hooks/useTeamFinance'
 import { BudgetTab, GoalsTab, SupportTab, AlertsTab, ReportTab, MonthlyFinanceTab } from '@/components/finance/ExtraFinanceTabs'
+import { statusLabel } from '@/lib/status-labels'
 
 type Tab = 'overview' | 'jars' | 'log' | 'categories' | 'monthly' | 'budget' | 'goals' | 'support' | 'alerts' | 'report'
 
@@ -228,7 +229,7 @@ function JarsTab({ familyId, models, jars }: { familyId: string; models: Finance
               <div>
                 <p className="font-medium">{m.name} <span className="text-xs text-muted-foreground">({m.modelType})</span></p>
                 <span className={cn('text-xs px-2 py-0.5 rounded-full font-medium', m.status === 'ACTIVE' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600')}>
-                  {m.status === 'ACTIVE' ? 'Đang dùng' : m.status}
+                  {statusLabel(m.status, 'financeModel')}
                 </span>
               </div>
               {m.status !== 'ACTIVE' && (

@@ -14,6 +14,7 @@ import { formatCurrency, getInitials } from '@/lib/utils'
 import { Wallet, CheckSquare, Users, TrendingUp } from 'lucide-react'
 import { useActiveFamily } from '@/hooks/useFamily'
 import { useFinanceOverview } from '@/hooks/useTeamFinance'
+import { statusLabel } from '@/lib/status-labels'
 
 /** Nhãn vai trò thành viên theo enum của API team. */
 const FAMILY_ROLE_LABEL: Record<string, string> = {
@@ -182,7 +183,7 @@ export default function DashboardPage() {
                       task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
                       'bg-gray-100 text-gray-700'
                     }`}>
-                      {task.status === 'PENDING' ? 'Chờ' : task.status === 'IN_PROGRESS' ? 'Đang làm' : task.status === 'SUBMITTED' ? 'Chờ duyệt' : task.status === 'APPROVED' ? 'Xong' : task.status}
+                      {statusLabel(task.status, 'task')}
                     </span>
                   </div>
                 ))}

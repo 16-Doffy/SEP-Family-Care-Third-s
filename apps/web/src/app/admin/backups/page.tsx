@@ -10,6 +10,7 @@ import toast from 'react-hot-toast'
 import { useAdminBackups, useCreateAdminBackup, useAdminRestores, useCreateAdminRestore, useConfirmAdminRestore, BackupTarget } from '@/hooks/useAdmin'
 import { formatDate } from '@/lib/utils'
 import { getApiErrorMessage } from '@/lib/api'
+import { statusLabel } from '@/lib/status-labels'
 
 const BACKUP_TARGETS: BackupTarget[] = ['DATABASE', 'SYSTEM_CONFIG', 'FULL_SYSTEM']
 
@@ -135,7 +136,7 @@ export default function BackupsPage() {
                         <td className="py-2 text-xs font-semibold">{b.target}</td>
                         <td className="py-2">
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_CLS[b.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                            {b.status}
+                            {statusLabel(b.status, 'backup')}
                           </span>
                         </td>
                         <td className="py-2 text-xs text-muted-foreground max-w-[140px] truncate">{b.note ?? '—'}</td>
@@ -216,7 +217,7 @@ export default function BackupsPage() {
                         <td className="py-2 font-mono text-[10px] text-muted-foreground">{r.backupId ? `${r.backupId.slice(0, 12)}…` : '—'}</td>
                         <td className="py-2">
                           <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_CLS[r.status] ?? 'bg-gray-100 text-gray-600'}`}>
-                            {r.status}
+                            {statusLabel(r.status, 'backup')}
                           </span>
                         </td>
                         <td className="py-2 text-xs text-muted-foreground max-w-[120px] truncate">{r.note ?? '—'}</td>

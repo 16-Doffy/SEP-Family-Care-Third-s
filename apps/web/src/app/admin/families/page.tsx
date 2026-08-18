@@ -12,6 +12,7 @@ import { Search, Loader2, Users, Crown, RefreshCw, RotateCcw } from 'lucide-reac
 import { formatDate } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import { getApiErrorMessage } from '@/lib/api'
+import { statusLabel } from '@/lib/status-labels'
 import {
   useAdminFamilies, useUpdateAdminFamily, useAdminFamily, useUpdateAdminFamilyMember,
   useAdminFamilySubscription, useAdminFamilyActivationStatus, useAdminFamilyProvisioningLogs,
@@ -94,7 +95,7 @@ export default function AdminFamiliesPage() {
                         </p>
                       </div>
                       <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-                        <Badge variant={STATUS_BADGE[f.status] ?? 'secondary'} className="text-[10px]">{f.status}</Badge>
+                        <Badge variant={STATUS_BADGE[f.status] ?? 'secondary'} className="text-[10px]">{statusLabel(f.status)}</Badge>
                         <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => setEditing(f)}>Sửa</Button>
                         <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setSubscriptionFamilyId(f.id)}>
                           <Crown className="w-3 h-3" />Gói
@@ -283,7 +284,7 @@ function FamilySubscriptionDialog({
                 {/* Current info */}
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <InfoRow label="Plan Code" value={sub?.planCode} emptyLabel="Chưa gán gói" />
-                  <InfoRow label="Trạng thái" value={sub?.status} />
+                  <InfoRow label="Trạng thái" value={statusLabel(sub?.status)} />
                   <InfoRow label="Bắt đầu kỳ" value={sub?.currentPeriodStart ? formatDate(sub.currentPeriodStart) : undefined} />
                   <InfoRow label="Kết thúc kỳ" value={sub?.currentPeriodEnd ? formatDate(sub.currentPeriodEnd) : undefined} />
                 </div>

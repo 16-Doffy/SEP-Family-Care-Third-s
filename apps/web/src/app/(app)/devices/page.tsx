@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { statusLabel } from '@/lib/status-labels'
 
 interface FamilyMemberOption {
   id: string
@@ -212,7 +213,7 @@ export default function DevicesPage() {
                           <p className="font-semibold text-gray-900">{d.name}</p>
                           <p className="text-xs text-muted-foreground">{deviceTypeLabel[d.type]} · {d.deviceCode}</p>
                         </div>
-                        <Badge variant="outline" className={statusColor[d.status]}>{d.status}</Badge>
+                        <Badge variant="outline" className={statusColor[d.status]}>{statusLabel(d.status, 'device')}</Badge>
                       </div>
                       <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1"><Smartphone className="w-3 h-3" />{d.owner?.displayName ?? 'Chưa gán'}</span>

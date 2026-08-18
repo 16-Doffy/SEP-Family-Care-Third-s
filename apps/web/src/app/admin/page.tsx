@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
-  BarChart, Bar, LabelList,
+  BarChart, Bar,
   XAxis, YAxis, CartesianGrid,
 } from 'recharts'
 import {
@@ -187,6 +187,7 @@ export default function AdminPage() {
               {areaData.length > 0 && (
                 <div className="flex items-center gap-3 text-[11px] text-slate-500">
                   <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-indigo-400 inline-block" /> Doanh thu</span>
+                  <span className="text-slate-400">Rê chuột vào cột để xem số liệu</span>
                 </div>
               )}
             </div>
@@ -235,11 +236,13 @@ export default function AdminPage() {
                         : [num.toLocaleString('vi-VN'), 'Giao dịch']
                     }}
                   />
-                  <Bar yAxisId="rev" dataKey="revenue" fill="url(#revGrad)" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                    <LabelList dataKey="revenue" position="top" formatter={(v: any) => yTickFmt(Number(v))} style={{ fontSize: 10, fill: '#4f46e5', fontWeight: 600 }} />
-                  </Bar>
-                  <Bar yAxisId="pay" dataKey="payments" fill="url(#payGrad)" radius={[4, 4, 0, 0]} maxBarSize={40}>
-                  </Bar>
+                  {/* Bỏ nhãn số tiền cố định trên cột: biểu đồ nhét tới 31 ngày vào một
+                      chiều rộng cố định nên cột rất hẹp — ngày nào nhiều người mua cùng
+                      lúc (số tiền lớn, chữ dài hơn cột) là nhãn tràn đè lên cột/nhãn ngày
+                      bên cạnh, không có cách sửa hình học nào ổn định cho mọi trường hợp.
+                      Số liệu chính xác vẫn xem được qua tooltip khi rê chuột vào cột. */}
+                  <Bar yAxisId="rev" dataKey="revenue" fill="url(#revGrad)" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                  <Bar yAxisId="pay" dataKey="payments" fill="url(#payGrad)" radius={[4, 4, 0, 0]} maxBarSize={40} />
                 </BarChart>
               </ResponsiveContainer>
               </div>

@@ -65,7 +65,11 @@ export const KNOWN_FEATURES: FeatureCatalogEntry[] = [
   { key: 'ai.taskSummary', label: 'Tóm tắt công việc AI', description: 'Tóm tắt tiến độ công việc', group: 'Trợ lý AI', tier: 'ai', available: false, configurable: false },
   { key: 'ai.savingSuggestions', label: 'Gợi ý tiết kiệm AI', description: 'Gợi ý tối ưu chi tiêu', group: 'Trợ lý AI', tier: 'ai', available: false, configurable: false },
   { key: 'sos.wearablePairing', label: 'Kết nối thiết bị đeo', description: 'Ghép thiết bị đeo', group: 'SOS và an toàn', tier: 'advanced' },
-  { key: 'sos.fallDetection', label: 'Phát hiện té ngã', description: 'Tự động cảnh báo khi phát hiện té ngã', group: 'SOS và an toàn', tier: 'advanced' },
+  // BE xác nhận 2026-08-18: MVP gộp "Phát hiện té ngã" + "Tự động tạo SOS khi
+  // té ngã" thành 1 cụm tính năng trả phí duy nhất, khoá/mở chung 1 key này -
+  // không tách key riêng cho auto-SOS. FE có thể hiển thị 2 dòng mô tả nhưng
+  // KHÔNG được tạo thêm featureAccess key mới cho auto-SOS.
+  { key: 'sos.fallDetection', label: 'Phát hiện té ngã', description: 'Tự động cảnh báo và tạo SOS khi phát hiện té ngã', group: 'SOS và an toàn', tier: 'advanced' },
   // BE xác nhận 2026-08-18: chỉ gửi vị trí 1 LẦN lúc tạo cảnh báo là miễn phí
   // (không key nào khoá việc này — luôn chạy trong luồng tạo SOS). Key này là
   // THEO DÕI LIÊN TỤC trong lúc cảnh báo còn mở (`_startLocationStreaming`,

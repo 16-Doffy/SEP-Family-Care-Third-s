@@ -62,6 +62,30 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+/**
+ * BE trả 403 kèm `code: "FEATURE_LOCKED"` khi gói hiện tại không có quyền
+ * dùng tính năng vừa gọi (xem đề xuất `DE_XUAT_BE_FEATUREACCESS_
+ * ENFORCEMENT_2026-08-18.md`, repo mobile). Bus module-level đơn giản thay
+ * vì Context, vì nơi phát (interceptor axios) không nằm trong cây React nên
+ * không gọi hook được — `<FeatureLockedDialog>` (mount 1 lần ở layout) tự
+ * subscribe, không phải bên gọi API nào cũng phải biết tới dialog này.
+ */
+export interface FeatureLockedEvent {
+  message: string
+  featureKey?: string
+}
+type FeatureLockedListener = (event: FeatureLockedEvent) => void
+const featureLockedListeners = new Set<FeatureLockedListener>()
+
+export function onFeatureLocked(listener: FeatureLockedListener): () => void {
+  featureLockedListeners.add(listener)
+  return () => featureLockedListeners.delete(listener)
+}
+
+function emitFeatureLocked(event: FeatureLockedEvent) {
+  featureLockedListeners.forEach((listener) => listener(event))
+}
+
 /** Kiểu envelope chuẩn của API team. */
 type Envelope<T = unknown> = { success: boolean; message?: string; data: T }
 
@@ -93,6 +117,12 @@ api.interceptors.response.use(
   },
   async (error) => {
     const original = error.config
+    if (error.response?.status === 403 && error.response?.data?.code === 'FEATURE_LOCKED') {
+      emitFeatureLocked({
+        message: getApiErrorMessage(error, 'Tính năng chưa nằm trong gói hiện tại.'),
+        featureKey: error.response?.data?.featureKey,
+      })
+    }
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true
       try {

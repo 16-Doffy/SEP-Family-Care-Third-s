@@ -8,6 +8,7 @@ import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/context/AuthContext'
 import { Sidebar } from '@/components/layout/Sidebar'
+import { FeatureLockedDialog } from '@/components/subscription/FeatureLockedDialog'
 import { Loader2 } from 'lucide-react'
 
 /**
@@ -41,6 +42,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <main className="flex-1 flex flex-col min-w-0">
         {children}
       </main>
+      <FeatureLockedDialog />
     </div>
   )
 }

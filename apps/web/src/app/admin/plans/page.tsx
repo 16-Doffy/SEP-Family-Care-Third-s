@@ -28,7 +28,7 @@ import {
  */
 type FeatureTier = 'core' | 'advanced' | 'ai'
 
-const KNOWN_FEATURES: { key: string; label: string; description: string; group: string; tier: FeatureTier }[] = [
+const KNOWN_FEATURES: { key: string; label: string; description: string; group: string; tier: FeatureTier; available?: boolean }[] = [
   { key: 'calendar.enabled', label: 'Lịch gia đình', description: 'Tạo, sửa và hủy sự kiện lịch', group: 'Lịch gia đình', tier: 'core' },
   { key: 'calendar.reminders', label: 'Nhắc lịch', description: 'Nhắc trước giờ diễn ra sự kiện', group: 'Lịch gia đình', tier: 'advanced' },
   { key: 'calendar.recurringEvents', label: 'Lịch lặp lại', description: 'Tạo sự kiện lịch định kỳ', group: 'Lịch gia đình', tier: 'advanced' },
@@ -37,7 +37,7 @@ const KNOWN_FEATURES: { key: string; label: string; description: string; group: 
   { key: 'finance.budgetAlerts', label: 'Cảnh báo ngân sách', description: 'Cảnh báo vượt ngân sách', group: 'Tài chính', tier: 'advanced' },
   { key: 'finance.supportRequests', label: 'Yêu cầu hỗ trợ chi tiêu', description: 'Quy trình xin hỗ trợ tài chính', group: 'Tài chính', tier: 'core' },
   { key: 'finance.reportExport', label: 'Xuất báo cáo tài chính', description: 'Báo cáo và xuất dữ liệu nâng cao', group: 'Tài chính', tier: 'advanced' },
-  { key: 'finance.aiOcrSuggestion', label: 'Quét hoá đơn bằng AI', description: 'Đọc hoá đơn và gợi ý dữ liệu giao dịch', group: 'Tài chính', tier: 'ai' },
+  { key: 'finance.aiOcrSuggestion', label: 'Quét hoá đơn bằng AI', description: 'Đọc hoá đơn và gợi ý dữ liệu giao dịch', group: 'Tài chính', tier: 'ai', available: false },
   { key: 'tasks.recurringTasks', label: 'Công việc lặp lại', description: 'Thiết lập công việc định kỳ', group: 'Nhiệm vụ và phần thưởng', tier: 'advanced' },
   { key: 'tasks.proofUpload', label: 'Bằng chứng công việc', description: 'Tải bằng chứng hoàn thành', group: 'Nhiệm vụ và phần thưởng', tier: 'core' },
   { key: 'tasks.rewardSettlement', label: 'Quyết toán phần thưởng', description: 'Quyết toán và tranh chấp phần thưởng', group: 'Nhiệm vụ và phần thưởng', tier: 'core' },
@@ -45,16 +45,16 @@ const KNOWN_FEATURES: { key: string; label: string; description: string; group: 
   { key: 'album.videoUpload', label: 'Tải video album', description: 'Cho phép lưu video album', group: 'Album', tier: 'advanced' },
   { key: 'album.faceSuggestions', label: 'Gợi ý khuôn mặt AI', description: 'AI gợi ý thành viên trong ảnh; người dùng xác nhận tag', group: 'Album', tier: 'ai' },
   { key: 'ai.assistant', label: 'Trợ lý AI', description: 'Trợ lý AI trong ứng dụng', group: 'Trợ lý AI', tier: 'ai' },
-  { key: 'ai.financeSummary', label: 'Tóm tắt tài chính AI', description: 'Tóm tắt tình hình tài chính', group: 'Trợ lý AI', tier: 'ai' },
-  { key: 'ai.taskSummary', label: 'Tóm tắt công việc AI', description: 'Tóm tắt tiến độ công việc', group: 'Trợ lý AI', tier: 'ai' },
-  { key: 'ai.savingSuggestions', label: 'Gợi ý tiết kiệm AI', description: 'Gợi ý tối ưu chi tiêu', group: 'Trợ lý AI', tier: 'ai' },
+  { key: 'ai.financeSummary', label: 'Tóm tắt tài chính AI', description: 'Tóm tắt tình hình tài chính', group: 'Trợ lý AI', tier: 'ai', available: false },
+  { key: 'ai.taskSummary', label: 'Tóm tắt công việc AI', description: 'Tóm tắt tiến độ công việc', group: 'Trợ lý AI', tier: 'ai', available: false },
+  { key: 'ai.savingSuggestions', label: 'Gợi ý tiết kiệm AI', description: 'Gợi ý tối ưu chi tiêu', group: 'Trợ lý AI', tier: 'ai', available: false },
   { key: 'sos.wearablePairing', label: 'Kết nối thiết bị đeo', description: 'Ghép thiết bị đeo', group: 'SOS và an toàn', tier: 'advanced' },
   { key: 'sos.fallDetection', label: 'Phát hiện té ngã', description: 'Tự động cảnh báo khi phát hiện té ngã', group: 'SOS và an toàn', tier: 'advanced' },
   { key: 'sos.liveLocation', label: 'SOS vị trí trực tiếp', description: 'Chia sẻ vị trí trực tiếp khi có cảnh báo', group: 'SOS và an toàn', tier: 'core' },
   { key: 'sos.routeHistory', label: 'Lịch sử hành trình', description: 'Xem lại lịch sử vị trí nhiều ngày', group: 'SOS và an toàn', tier: 'advanced' },
   { key: 'chat.privateChat', label: 'Chat riêng tư', description: 'Nhắn tin riêng', group: 'Nhắn tin', tier: 'core' },
   { key: 'chat.attachments', label: 'Đính kèm chat', description: 'Gửi file và media', group: 'Nhắn tin', tier: 'core' },
-  { key: 'chat.announcements', label: 'Thông báo gia đình', description: 'Đăng thông báo gia đình', group: 'Nhắn tin', tier: 'core' },
+  { key: 'chat.announcements', label: 'Thông báo gia đình', description: 'Đăng thông báo gia đình', group: 'Nhắn tin', tier: 'core', available: false },
 ]
 
 /** Thứ tự nhóm hiện trên giao diện, lấy theo thứ tự key xuất hiện ở trên. */
@@ -66,7 +66,18 @@ const TIER_META: Record<FeatureTier, { label: string; hint: string; className: s
   ai: { label: 'Dùng AI', hint: 'tốn chi phí gọi mô hình mỗi lần dùng', className: 'bg-amber-50 text-amber-700 border-amber-200' },
 }
 
-const CORE_FEATURE_KEYS = KNOWN_FEATURES.filter((f) => f.tier === 'core').map((f) => f.key)
+/**
+ * Tính năng đã có thật trong ứng dụng, đối chiếu bản dump Swagger
+ * `family-care-api.json` (237 path) và mã nguồn web + mobile ngày 18/08/2026.
+ *
+ * 5 key BE khai trong enum nhưng chưa có gì đứng sau: quét hoá đơn AI, ba mục
+ * tóm tắt/gợi ý AI, và thông báo gia đình. Bật chúng lên là bán thứ không tồn
+ * tại, nên giao diện đánh dấu riêng và preset không chọn.
+ */
+const isFeatureAvailable = (f: (typeof KNOWN_FEATURES)[number]) => f.available !== false
+
+const AVAILABLE_FEATURE_KEYS = KNOWN_FEATURES.filter(isFeatureAvailable).map((f) => f.key)
+const CORE_FEATURE_KEYS = KNOWN_FEATURES.filter((f) => f.tier === 'core' && isFeatureAvailable(f)).map((f) => f.key)
 
 function featureLabel(key: string) {
   return KNOWN_FEATURES.find((f) => f.key === key)?.label ?? key
@@ -184,11 +195,15 @@ export default function PlansAdminPage() {
     setForm((prev) => ({
       ...prev,
       features: Object.fromEntries(
-        KNOWN_FEATURES.map((f) => [f.key, preset === 'all' || (preset === 'core' && f.tier === 'core')]),
+        KNOWN_FEATURES.map((f) => [
+          f.key,
+          isFeatureAvailable(f) && (preset === 'all' || (preset === 'core' && f.tier === 'core')),
+        ]),
       ),
     }))
 
   const enabledFeatureCount = KNOWN_FEATURES.filter((f) => form.features[f.key]).length
+  const enabledUnavailable = KNOWN_FEATURES.filter((f) => !isFeatureAvailable(f) && form.features[f.key])
 
   const validate = (): boolean => {
     if (!form.planCode.trim()) { toast.error('Mã gói không được để trống'); return false }
@@ -460,6 +475,12 @@ export default function PlansAdminPage() {
                   Gói chưa bật tính năng nào. Người dùng gói này sẽ không tạo được sự kiện lịch và không dùng được các thao tác cơ bản khác — bấm “Gói miễn phí” ở trên để bật nhóm cơ bản.
                 </p>
               )}
+              {enabledUnavailable.length > 0 && (
+                <p className="text-[11px] leading-snug text-red-700">
+                  {enabledUnavailable.length} quyền đang bật chưa có tính năng thật đứng sau ({enabledUnavailable.map((f) => f.label).join(', ')}) —
+                  bật lên chỉ hiện badge, người dùng bấm vào sẽ không thấy gì. Nên tắt các quyền này cho tới khi tính năng được xây xong.
+                </p>
+              )}
               {legacyFeatureKeys.length > 0 && (
                 <p className="text-[11px] leading-snug text-amber-700">
                   Gói này còn {legacyFeatureKeys.length} quyền kiểu cũ không còn dùng nữa và sẽ bị bỏ khi lưu. Hãy chọn lại quyền trong danh sách bên dưới.
@@ -487,27 +508,37 @@ export default function PlansAdminPage() {
                         </div>
                       </div>
                       <div className="divide-y">
-                        {items.map((f) => (
-                          <label
-                            key={f.key}
-                            title={`Mã kỹ thuật: ${f.key}`}
-                            className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/40 transition-colors"
-                          >
-                            <input
-                              type="checkbox"
-                              className="w-4 h-4 accent-violet-600 shrink-0"
-                              checked={!!form.features[f.key]}
-                              onChange={() => toggleFeature(f.key)}
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium leading-none">{f.label}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">{f.description}</p>
-                            </div>
-                            <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${TIER_META[f.tier].className}`}>
-                              {TIER_META[f.tier].label}
-                            </span>
-                          </label>
-                        ))}
+                        {items.map((f) => {
+                          const available = isFeatureAvailable(f)
+                          return (
+                            <label
+                              key={f.key}
+                              title={available ? `Mã kỹ thuật: ${f.key}` : `Mã kỹ thuật: ${f.key} — chưa có tính năng thật trong app, chỉ mới khai ở BE`}
+                              className={`flex items-center gap-3 px-3 py-2.5 transition-colors ${available ? 'cursor-pointer hover:bg-muted/40' : 'cursor-not-allowed opacity-60'}`}
+                            >
+                              <input
+                                type="checkbox"
+                                className="w-4 h-4 accent-violet-600 shrink-0 disabled:cursor-not-allowed"
+                                checked={!!form.features[f.key]}
+                                disabled={!available}
+                                onChange={() => toggleFeature(f.key)}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium leading-none">{f.label}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">{f.description}</p>
+                              </div>
+                              {available ? (
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${TIER_META[f.tier].className}`}>
+                                  {TIER_META[f.tier].label}
+                                </span>
+                              ) : (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded border shrink-0 bg-gray-50 text-gray-500 border-gray-200">
+                                  Chưa có trong app
+                                </span>
+                              )}
+                            </label>
+                          )
+                        })}
                       </div>
                     </div>
                   )
@@ -521,6 +552,12 @@ export default function PlansAdminPage() {
                     {TIER_META[tier].hint}
                   </span>
                 ))}
+                {AVAILABLE_FEATURE_KEYS.length < KNOWN_FEATURES.length && (
+                  <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <span className="px-1.5 py-0.5 rounded border bg-gray-50 text-gray-500 border-gray-200">Chưa có trong app</span>
+                    BE đã khai quyền nhưng chưa có tính năng thật đứng sau — khoá tick để tránh bán thứ chưa xây
+                  </span>
+                )}
               </div>
             </div>
 

@@ -6,14 +6,18 @@
  * nên trang này hiển thị thông tin ở dạng chỉ đọc, kèm thông tin gia đình.
  */
 'use client'
+import { useState } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { useActiveFamily } from '@/hooks/useFamily'
 import { Topbar } from '@/components/layout/Topbar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Crown } from 'lucide-react'
 import { getInitials } from '@/lib/utils'
 import { statusLabel } from '@/lib/status-labels'
+import { UpgradePlanDialog } from '@/components/payment/UpgradePlanDialog'
 
 const ROLE_LABEL: Record<string, string> = {
   FAMILY_MANAGER: 'Family Manager',
@@ -29,6 +33,7 @@ export default function SettingsPage() {
   const { user } = useAuth()
   const { family } = useActiveFamily()
   const member = family?.members?.find((m) => m.userId === user?.id)
+  const [upgradeOpen, setUpgradeOpen] = useState(false)
 
   return (
     <div>
@@ -73,10 +78,21 @@ export default function SettingsPage() {
           </Card>
         )}
 
+        <Card>
+          <CardHeader><CardTitle>Gói đăng ký</CardTitle></CardHeader>
+          <CardContent className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">Xem các gói đang mở bán và nâng cấp cho gia đình.</p>
+            <Button onClick={() => setUpgradeOpen(true)} className="gap-2">
+              <Crown className="w-4 h-4" />Xem các gói đăng ký
+            </Button>
+          </CardContent>
+        </Card>
+
         <p className="text-xs text-muted-foreground">
           Cập nhật hồ sơ, đổi mật khẩu và quản lý phiên đăng nhập sẽ khả dụng khi API chung bổ sung các endpoint tương ứng.
         </p>
       </div>
+      <UpgradePlanDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
     </div>
   )
 }

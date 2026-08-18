@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { ChevronLeft, ChevronRight, Plus, Trash2, CalendarDays, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
+import { FeatureGate } from '@/components/subscription/FeatureGate'
 
 /** Kiểu dữ liệu sự kiện gia đình trả về từ API */
 interface FamilyEvent {
@@ -167,6 +168,7 @@ export default function CalendarPage() {
   return (
     <div className="flex h-screen flex-col">
       <Topbar title={pageTitle} />
+      <FeatureGate featureKey="calendar.enabled" label="Lịch gia đình">
       <div className="flex flex-1 overflow-hidden">
         {/* Calendar grid */}
         <div className="flex-1 flex flex-col p-6 overflow-auto">
@@ -319,6 +321,7 @@ export default function CalendarPage() {
           </div>
         </aside>
       </div>
+      </FeatureGate>
 
       {/* Create event dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>

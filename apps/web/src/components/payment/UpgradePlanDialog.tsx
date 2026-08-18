@@ -24,6 +24,7 @@ import { startCheckout } from '@/lib/payments'
 import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
 import type { SubscriptionPlan } from '@/hooks/useAdmin'
+import { isDisplayableFeatureKey } from '@/lib/feature-catalog'
 
 /** true nếu gói là gói miễn phí (billingPeriod FREE hoặc không có giá). */
 function isFreePlan(p: SubscriptionPlan) {
@@ -31,9 +32,15 @@ function isFreePlan(p: SubscriptionPlan) {
   return period === 'FREE' || (Number(p.monthlyPrice ?? 0) === 0 && Number(p.yearlyPrice ?? p.annualPrice ?? 0) === 0)
 }
 
-/** Đếm số tính năng được bật trong featureAccess. */
+/**
+ * Đếm số tính năng được bật trong featureAccess — CHỈ tính key đã có tính
+ * năng thật (`isDisplayableFeatureKey`). Đây là màn khách hàng thật sự thấy
+ * khi cân nhắc nâng cấp; đếm cả 5 key BE mới khai enum nhưng chưa xây (vd
+ * `chat.announcements`) là hứa suông một con số cao hơn thực tế.
+ */
 function featureCount(p: SubscriptionPlan) {
-  return p.featureAccess ? Object.values(p.featureAccess).filter(Boolean).length : 0
+  if (!p.featureAccess) return 0
+  return Object.entries(p.featureAccess).filter(([key, v]) => Boolean(v) && isDisplayableFeatureKey(key)).length
 }
 
 /**

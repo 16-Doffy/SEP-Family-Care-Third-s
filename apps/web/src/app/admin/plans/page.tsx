@@ -7,83 +7,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { Pencil, Trash2, Plus, HardDrive, Users, Loader2, CreditCard, BadgePercent, CalendarDays, Tag } from 'lucide-react'
+import { Pencil, Trash2, Plus, HardDrive, Users, Loader2, CreditCard, BadgePercent, CalendarDays, Tag, TriangleAlert } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import toast from 'react-hot-toast'
 import { getApiErrorMessage } from '@/lib/api'
 import {
   useAdminSubscriptionPlans, useCreateSubscriptionPlan, useUpdateSubscriptionPlan, useDeleteSubscriptionPlan,
   type SubscriptionPlan,
 } from '@/hooks/useAdmin'
-
-/**
- * Danh sách key featureAccess chính thức theo Swagger.
- * FE chỉ gửi giá trị boolean từ danh sách này; key legacy từ dữ liệu cũ vẫn được
- * giữ nguyên khi PATCH để không làm mất cấu hình đã lưu.
- *
- * `group` chỉ để xếp nhóm trong giao diện. `tier` là gợi ý đóng gói, hiện thành
- * nhãn cạnh mỗi dòng để admin biết nên bật gì cho gói nào:
- * `core` = vòng lặp lõi, gói miễn phí cũng phải có (tắt là người dùng không tạo
- * được sự kiện lịch, không nhắn tin được); `advanced` = tự động hoá và lưu trữ
- * nặng; `ai` = tốn chi phí gọi mô hình mỗi lần dùng.
- */
-type FeatureTier = 'core' | 'advanced' | 'ai'
-
-const KNOWN_FEATURES: { key: string; label: string; description: string; group: string; tier: FeatureTier; available?: boolean }[] = [
-  { key: 'calendar.enabled', label: 'Lịch gia đình', description: 'Tạo, sửa và hủy sự kiện lịch', group: 'Lịch gia đình', tier: 'core' },
-  { key: 'calendar.reminders', label: 'Nhắc lịch', description: 'Nhắc trước giờ diễn ra sự kiện', group: 'Lịch gia đình', tier: 'advanced' },
-  { key: 'calendar.recurringEvents', label: 'Lịch lặp lại', description: 'Tạo sự kiện lịch định kỳ', group: 'Lịch gia đình', tier: 'advanced' },
-  { key: 'finance.budgetPlanning', label: 'Lập kế hoạch ngân sách', description: 'Lập ngân sách chi tiêu', group: 'Tài chính', tier: 'advanced' },
-  { key: 'finance.financialGoals', label: 'Mục tiêu tài chính', description: 'Theo dõi mục tiêu tiết kiệm', group: 'Tài chính', tier: 'advanced' },
-  { key: 'finance.budgetAlerts', label: 'Cảnh báo ngân sách', description: 'Cảnh báo vượt ngân sách', group: 'Tài chính', tier: 'advanced' },
-  { key: 'finance.supportRequests', label: 'Yêu cầu hỗ trợ chi tiêu', description: 'Quy trình xin hỗ trợ tài chính', group: 'Tài chính', tier: 'core' },
-  { key: 'finance.reportExport', label: 'Xuất báo cáo tài chính', description: 'Báo cáo và xuất dữ liệu nâng cao', group: 'Tài chính', tier: 'advanced' },
-  { key: 'finance.aiOcrSuggestion', label: 'Quét hoá đơn bằng AI', description: 'Đọc hoá đơn và gợi ý dữ liệu giao dịch', group: 'Tài chính', tier: 'ai', available: false },
-  { key: 'tasks.recurringTasks', label: 'Công việc lặp lại', description: 'Thiết lập công việc định kỳ', group: 'Nhiệm vụ và phần thưởng', tier: 'advanced' },
-  { key: 'tasks.proofUpload', label: 'Bằng chứng công việc', description: 'Tải bằng chứng hoàn thành', group: 'Nhiệm vụ và phần thưởng', tier: 'core' },
-  { key: 'tasks.rewardSettlement', label: 'Quyết toán phần thưởng', description: 'Quyết toán và tranh chấp phần thưởng', group: 'Nhiệm vụ và phần thưởng', tier: 'core' },
-  { key: 'tasks.rewardAllocation', label: 'Phân bổ phần thưởng', description: 'Phân bổ phần thưởng công việc', group: 'Nhiệm vụ và phần thưởng', tier: 'core' },
-  { key: 'album.videoUpload', label: 'Tải video album', description: 'Cho phép lưu video album', group: 'Album', tier: 'advanced' },
-  { key: 'album.faceSuggestions', label: 'Gợi ý khuôn mặt AI', description: 'AI gợi ý thành viên trong ảnh; người dùng xác nhận tag', group: 'Album', tier: 'ai' },
-  { key: 'ai.assistant', label: 'Trợ lý AI', description: 'Trợ lý AI trong ứng dụng', group: 'Trợ lý AI', tier: 'ai' },
-  { key: 'ai.financeSummary', label: 'Tóm tắt tài chính AI', description: 'Tóm tắt tình hình tài chính', group: 'Trợ lý AI', tier: 'ai', available: false },
-  { key: 'ai.taskSummary', label: 'Tóm tắt công việc AI', description: 'Tóm tắt tiến độ công việc', group: 'Trợ lý AI', tier: 'ai', available: false },
-  { key: 'ai.savingSuggestions', label: 'Gợi ý tiết kiệm AI', description: 'Gợi ý tối ưu chi tiêu', group: 'Trợ lý AI', tier: 'ai', available: false },
-  { key: 'sos.wearablePairing', label: 'Kết nối thiết bị đeo', description: 'Ghép thiết bị đeo', group: 'SOS và an toàn', tier: 'advanced' },
-  { key: 'sos.fallDetection', label: 'Phát hiện té ngã', description: 'Tự động cảnh báo khi phát hiện té ngã', group: 'SOS và an toàn', tier: 'advanced' },
-  { key: 'sos.liveLocation', label: 'SOS vị trí trực tiếp', description: 'Chia sẻ vị trí trực tiếp khi có cảnh báo', group: 'SOS và an toàn', tier: 'core' },
-  { key: 'sos.routeHistory', label: 'Lịch sử hành trình', description: 'Xem lại lịch sử vị trí nhiều ngày', group: 'SOS và an toàn', tier: 'advanced' },
-  { key: 'chat.privateChat', label: 'Chat riêng tư', description: 'Nhắn tin riêng', group: 'Nhắn tin', tier: 'core' },
-  { key: 'chat.attachments', label: 'Đính kèm chat', description: 'Gửi file và media', group: 'Nhắn tin', tier: 'core' },
-  { key: 'chat.announcements', label: 'Thông báo gia đình', description: 'Đăng thông báo gia đình', group: 'Nhắn tin', tier: 'core', available: false },
-]
-
-/** Thứ tự nhóm hiện trên giao diện, lấy theo thứ tự key xuất hiện ở trên. */
-const FEATURE_GROUPS = Array.from(new Set(KNOWN_FEATURES.map((f) => f.group)))
-
-const TIER_META: Record<FeatureTier, { label: string; hint: string; className: string }> = {
-  core: { label: 'Cơ bản', hint: 'nên bật cho mọi gói, kể cả gói miễn phí', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  advanced: { label: 'Nâng cao', hint: 'tự động hoá, lưu trữ nặng, thiết bị rời', className: 'bg-indigo-50 text-indigo-700 border-indigo-200' },
-  ai: { label: 'Dùng AI', hint: 'tốn chi phí gọi mô hình mỗi lần dùng', className: 'bg-amber-50 text-amber-700 border-amber-200' },
-}
-
-/**
- * Tính năng đã có thật trong ứng dụng, đối chiếu bản dump Swagger
- * `family-care-api.json` (237 path) và mã nguồn web + mobile ngày 18/08/2026.
- *
- * 5 key BE khai trong enum nhưng chưa có gì đứng sau: quét hoá đơn AI, ba mục
- * tóm tắt/gợi ý AI, và thông báo gia đình. Bật chúng lên là bán thứ không tồn
- * tại, nên giao diện đánh dấu riêng và preset không chọn.
- */
-const isFeatureAvailable = (f: (typeof KNOWN_FEATURES)[number]) => f.available !== false
-
-const AVAILABLE_FEATURE_KEYS = KNOWN_FEATURES.filter(isFeatureAvailable).map((f) => f.key)
-const CORE_FEATURE_KEYS = KNOWN_FEATURES.filter((f) => f.tier === 'core' && isFeatureAvailable(f)).map((f) => f.key)
-
-function featureLabel(key: string) {
-  return KNOWN_FEATURES.find((f) => f.key === key)?.label ?? key
-}
-
-const isOfficialFeatureKey = (key: string) => KNOWN_FEATURES.some((feature) => feature.key === key)
+import {
+  KNOWN_FEATURES, FEATURE_GROUPS, TIER_META, CORE_FEATURE_KEYS, CONFIGURABLE_FEATURE_KEYS, BASELINE_FEATURES,
+  isFeatureAvailable, isFeatureConfigurable, featureLabel, isOfficialFeatureKey, isDisplayableFeatureKey,
+  type FeatureTier,
+} from '@/lib/feature-catalog'
 
 interface FormState {
   planCode: string
@@ -145,6 +81,16 @@ export default function PlansAdminPage() {
       .filter(([key, value]) => Boolean(value) && !isOfficialFeatureKey(key))
       .map(([key]) => key)
     : []
+  /**
+   * Quyền chính thức nhưng KHÔNG cấu hình được (5 key "chưa xây" / "không phải
+   * công tắc riêng", xem `feature-catalog.ts`) mà dữ liệu đã lưu lỡ bật true —
+   * submit() không gửi lại 5 key này nên chúng tự bị dọn sạch ở lần lưu tới.
+   */
+  const ghostKeysPresent = editing
+    ? Object.entries((editing.featureAccess ?? {}) as Record<string, unknown>)
+      .filter(([key, value]) => Boolean(value) && isOfficialFeatureKey(key) && !CONFIGURABLE_FEATURE_KEYS.includes(key))
+      .map(([key]) => featureLabel(key))
+    : []
 
   useEffect(() => {
     if (!open) return
@@ -202,8 +148,7 @@ export default function PlansAdminPage() {
       ),
     }))
 
-  const enabledFeatureCount = KNOWN_FEATURES.filter((f) => form.features[f.key]).length
-  const enabledUnavailable = KNOWN_FEATURES.filter((f) => !isFeatureAvailable(f) && form.features[f.key])
+  const enabledFeatureCount = CONFIGURABLE_FEATURE_KEYS.filter((key) => form.features[key]).length
 
   const validate = (): boolean => {
     if (!form.planCode.trim()) { toast.error('Mã gói không được để trống'); return false }
@@ -227,7 +172,12 @@ export default function PlansAdminPage() {
       maxMembers: form.maxMembers ? Number(form.maxMembers) : undefined,
       storageLimit: Number(form.storageLimit) || 0,
       stripePriceId: form.billingPeriod === 'FREE' ? undefined : form.stripePriceId.trim() || undefined,
-      featureAccess: form.features,
+      // Chỉ gửi 21 key admin thật sự chọn được. BE REPLACE toàn bộ featureAccess mỗi
+      // lần PATCH (không merge) nên bỏ 5 key ẩn ra khỏi đây tự động dọn sạch dữ liệu
+      // ma còn sót từ trước — không cần admin tự tay tắt từng ô.
+      featureAccess: Object.fromEntries(
+        CONFIGURABLE_FEATURE_KEYS.map((key) => [key, !!form.features[key]]),
+      ),
       isActive: form.isActive,
     }
     const callbacks = {
@@ -276,71 +226,98 @@ export default function PlansAdminPage() {
         ) : plans.length === 0 ? (
           <p className="text-sm text-muted-foreground text-center py-10">Chưa có gói thuê bao nào</p>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {plans.map((p) => (
-              <Card key={p.id} className={!p.isActive ? 'opacity-55' : ''}>
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch">
+            {plans.map((p) => {
+              const fa = (p.featureAccess ?? {}) as Record<string, unknown>
+              const displayable = Object.entries(fa).filter(([key, v]) => Boolean(v) && isDisplayableFeatureKey(key)).map(([k]) => k)
+              const shownFeatures = displayable.slice(0, 6)
+              const moreFeaturesCount = displayable.length - shownFeatures.length
+              const hasLegacyKeys = Object.entries(fa).some(([key, value]) => Boolean(value) && !isOfficialFeatureKey(key))
+              const hasGhostKeys = Object.entries(fa).some(([key, value]) => Boolean(value) && isOfficialFeatureKey(key) && !isDisplayableFeatureKey(key))
+              return (
+                <Card key={p.id} className={cn('flex flex-col', !p.isActive && 'opacity-55')}>
+                  <CardHeader className="pb-2">
+                    <div className="flex items-start justify-between gap-2">
                       <CardTitle className="text-base truncate">{p.name}</CardTitle>
+                      <div className="flex gap-0.5 shrink-0">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(p)}>
+                          <Pencil className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleDelete(p)}>
+                          <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex gap-0.5 shrink-0">
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(p)}>
-                        <Pencil className="w-3.5 h-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => handleDelete(p)}>
-                        <Trash2 className="w-3.5 h-3.5 text-red-500" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2.5">
-                  <PriceSummary plan={p} plans={plans} />
+                  </CardHeader>
+                  <CardContent className="flex flex-1 flex-col gap-3">
+                    <PriceSummary plan={p} plans={plans} />
 
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                     {/* planCode là định danh kỹ thuật (mobile gửi lên khi checkout), không phải nhãn
                         cho người đọc — để cùng hàng với Stripe Price ID thay vì làm badge trên tiêu đề. */}
-                    <span className="flex items-center gap-1">
-                      <Tag className="w-3 h-3" />Mã gói: <span className="font-mono">{p.planCode}</span>
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <HardDrive className="w-3 h-3" />{p.storageLimit} MB
-                    </span>
-                    {p.maxMembers != null && (
+                    <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
-                        <Users className="w-3 h-3" />tối đa {p.maxMembers} thành viên
+                        <Tag className="w-3 h-3" />Mã gói: <span className="font-mono">{p.planCode}</span>
                       </span>
-                    )}
-                    {p.stripePriceId && (
                       <span className="flex items-center gap-1">
-                        <CreditCard className="w-3 h-3" />
-                        <span className="font-mono truncate max-w-[120px]">{p.stripePriceId}</span>
+                        <HardDrive className="w-3 h-3" />{p.storageLimit} MB
                       </span>
-                    )}
-                  </div>
-
-                  {p.featureAccess && Object.entries(p.featureAccess).some(([key, v]) => Boolean(v) && isOfficialFeatureKey(key)) && (
-                    <div className="flex flex-wrap gap-1 pt-1">
-                      {Object.entries(p.featureAccess).filter(([key, v]) => Boolean(v) && isOfficialFeatureKey(key)).map(([k]) => (
-                        <Badge key={k} variant="secondary" className="text-[10px]">{featureLabel(k)}</Badge>
-                      ))}
+                      {p.maxMembers != null && (
+                        <span className="flex items-center gap-1">
+                          <Users className="w-3 h-3" />tối đa {p.maxMembers} thành viên
+                        </span>
+                      )}
+                      {p.stripePriceId && (
+                        <span className="flex items-center gap-1">
+                          <CreditCard className="w-3 h-3" />
+                          <span className="font-mono truncate max-w-[120px]">{p.stripePriceId}</span>
+                        </span>
+                      )}
                     </div>
-                  )}
-                  {p.featureAccess && Object.entries(p.featureAccess).some(([key, value]) => Boolean(value) && !isOfficialFeatureKey(key)) && (
-                    <p className="text-[11px] text-amber-700">Có featureAccess legacy; mở Sửa để chọn lại quyền theo key chuẩn.</p>
-                  )}
 
-                  <div className="flex justify-between items-center pt-2 border-t">
-                    <Badge variant={p.isActive ? 'default' : 'secondary'} className="text-xs">
-                      {p.isActive ? 'Đang hoạt động' : 'Tắt'}
-                    </Badge>
-                    {p._count != null && (
-                      <span className="text-xs text-muted-foreground">{p._count.families} gia đình</span>
+                    <div className="space-y-1.5">
+                      <p className="text-[11px] font-medium text-muted-foreground">
+                        {displayable.length + BASELINE_FEATURES.length} tính năng người dùng thấy
+                        <span className="font-normal"> ({displayable.length} cấu hình được + {BASELINE_FEATURES.length} nền tảng)</span>
+                      </p>
+                      <div className="flex flex-wrap gap-1">
+                        {BASELINE_FEATURES.map((label) => (
+                          <Badge key={label} variant="outline" className="text-[10px] text-muted-foreground border-dashed" title="Luôn có ở mọi gói, không cấu hình được ở đây">
+                            {label}
+                          </Badge>
+                        ))}
+                        {shownFeatures.map((k) => (
+                          <Badge key={k} variant="secondary" className="text-[10px]">{featureLabel(k)}</Badge>
+                        ))}
+                        {moreFeaturesCount > 0 && (
+                          <Badge variant="outline" className="text-[10px] text-muted-foreground border-dashed">
+                            +{moreFeaturesCount} nữa
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+
+                    {(hasLegacyKeys || hasGhostKeys) && (
+                      <div className="flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[11px] leading-snug text-amber-800">
+                        <TriangleAlert className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                        <div className="space-y-1">
+                          {hasLegacyKeys && <p>Có quyền kiểu cũ không khớp key chuẩn — mở Sửa để chọn lại.</p>}
+                          {hasGhostKeys && <p>Có quyền chưa dùng được còn lưu trong dữ liệu — mở Sửa rồi bấm Cập nhật (không cần tick gì) để tự dọn.</p>}
+                        </div>
+                      </div>
                     )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+
+                    <div className="mt-auto flex justify-between items-center pt-2 border-t">
+                      <Badge variant={p.isActive ? 'default' : 'secondary'} className="text-xs">
+                        {p.isActive ? 'Đang hoạt động' : 'Tắt'}
+                      </Badge>
+                      {p._count != null && (
+                        <span className="text-xs text-muted-foreground">{p._count.families} gia đình</span>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         )}
 
@@ -453,7 +430,7 @@ export default function PlansAdminPage() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <Label>Tính năng của gói</Label>
                 <span className="text-xs text-muted-foreground">
-                  Đã bật <span className="font-semibold text-foreground tabular-nums">{enabledFeatureCount}</span>/{KNOWN_FEATURES.length} tính năng
+                  Đã bật <span className="font-semibold text-foreground tabular-nums">{enabledFeatureCount}</span>/{CONFIGURABLE_FEATURE_KEYS.length} tính năng
                 </span>
               </div>
 
@@ -475,10 +452,10 @@ export default function PlansAdminPage() {
                   Gói chưa bật tính năng nào. Người dùng gói này sẽ không tạo được sự kiện lịch và không dùng được các thao tác cơ bản khác — bấm “Gói miễn phí” ở trên để bật nhóm cơ bản.
                 </p>
               )}
-              {enabledUnavailable.length > 0 && (
-                <p className="text-[11px] leading-snug text-red-700">
-                  {enabledUnavailable.length} quyền đang bật chưa có tính năng thật đứng sau ({enabledUnavailable.map((f) => f.label).join(', ')}) —
-                  bật lên chỉ hiện badge, người dùng bấm vào sẽ không thấy gì. Nên tắt các quyền này cho tới khi tính năng được xây xong.
+              {ghostKeysPresent.length > 0 && (
+                <p className="text-[11px] leading-snug text-muted-foreground">
+                  Gói này còn {ghostKeysPresent.length} quyền chưa dùng được ({ghostKeysPresent.join(', ')}) từ trước — không hiện ở danh sách bên dưới,
+                  sẽ tự bị xoá khỏi gói khi bạn bấm Cập nhật.
                 </p>
               )}
               {legacyFeatureKeys.length > 0 && (
@@ -487,15 +464,25 @@ export default function PlansAdminPage() {
                 </p>
               )}
 
-              <div className="border rounded-md overflow-hidden">
+              {/*
+                Chỉ vẽ ô tick cho quyền `configurable` (21/26) — 5 quyền còn lại
+                (chưa xây tính năng, hoặc không phải công tắc riêng theo BE) ẩn
+                hẳn khỏi đây thay vì hiện xám, để admin không phải đoán vì sao có
+                ô không bấm được. Xem `feature-catalog.ts` để biết chi tiết 5 key.
+              */}
+              {/* Mỗi nhóm là một khối bo góc riêng, cách nhau bằng khoảng trống thật (space-y-3)
+                  thay vì chỉ một đường viền mỏng — trước đó header nhóm sau dính sát vào hàng
+                  cuối của nhóm trước, nhìn như cùng một khối. */}
+              <div className="space-y-3">
                 {FEATURE_GROUPS.map((group) => {
-                  const items = KNOWN_FEATURES.filter((f) => f.group === group)
+                  const items = KNOWN_FEATURES.filter((f) => f.group === group && isFeatureConfigurable(f))
+                  if (items.length === 0) return null
                   const onCount = items.filter((f) => form.features[f.key]).length
                   const allOn = onCount === items.length
                   return (
-                    <div key={group} className="border-b last:border-b-0">
-                      <div className="flex items-center justify-between gap-2 bg-muted/60 px-3 py-1.5">
-                        <span className="text-xs font-semibold">{group}</span>
+                    <div key={group} className="rounded-md border overflow-hidden">
+                      <div className="flex items-center justify-between gap-2 border-l-4 border-l-violet-500 bg-muted/60 px-3 py-2">
+                        <span className="text-xs font-semibold uppercase tracking-wide text-foreground/80">{group}</span>
                         <div className="flex items-center gap-2.5">
                           <span className="text-[11px] text-muted-foreground tabular-nums">{onCount}/{items.length}</span>
                           <button
@@ -508,37 +495,27 @@ export default function PlansAdminPage() {
                         </div>
                       </div>
                       <div className="divide-y">
-                        {items.map((f) => {
-                          const available = isFeatureAvailable(f)
-                          return (
-                            <label
-                              key={f.key}
-                              title={available ? `Mã kỹ thuật: ${f.key}` : `Mã kỹ thuật: ${f.key} — chưa có tính năng thật trong app, chỉ mới khai ở BE`}
-                              className={`flex items-center gap-3 px-3 py-2.5 transition-colors ${available ? 'cursor-pointer hover:bg-muted/40' : 'cursor-not-allowed opacity-60'}`}
-                            >
-                              <input
-                                type="checkbox"
-                                className="w-4 h-4 accent-violet-600 shrink-0 disabled:cursor-not-allowed"
-                                checked={!!form.features[f.key]}
-                                disabled={!available}
-                                onChange={() => toggleFeature(f.key)}
-                              />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium leading-none">{f.label}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5">{f.description}</p>
-                              </div>
-                              {available ? (
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${TIER_META[f.tier].className}`}>
-                                  {TIER_META[f.tier].label}
-                                </span>
-                              ) : (
-                                <span className="text-[10px] px-1.5 py-0.5 rounded border shrink-0 bg-gray-50 text-gray-500 border-gray-200">
-                                  Chưa có trong app
-                                </span>
-                              )}
-                            </label>
-                          )
-                        })}
+                        {items.map((f) => (
+                          <label
+                            key={f.key}
+                            title={`Mã kỹ thuật: ${f.key}`}
+                            className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-muted/40 transition-colors"
+                          >
+                            <input
+                              type="checkbox"
+                              className="w-4 h-4 accent-violet-600 shrink-0"
+                              checked={!!form.features[f.key]}
+                              onChange={() => toggleFeature(f.key)}
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium leading-none">{f.label}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">{f.description}</p>
+                            </div>
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded border shrink-0 ${TIER_META[f.tier].className}`}>
+                              {TIER_META[f.tier].label}
+                            </span>
+                          </label>
+                        ))}
                       </div>
                     </div>
                   )
@@ -552,12 +529,6 @@ export default function PlansAdminPage() {
                     {TIER_META[tier].hint}
                   </span>
                 ))}
-                {AVAILABLE_FEATURE_KEYS.length < KNOWN_FEATURES.length && (
-                  <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <span className="px-1.5 py-0.5 rounded border bg-gray-50 text-gray-500 border-gray-200">Chưa có trong app</span>
-                    BE đã khai quyền nhưng chưa có tính năng thật đứng sau — khoá tick để tránh bán thứ chưa xây
-                  </span>
-                )}
               </div>
             </div>
 

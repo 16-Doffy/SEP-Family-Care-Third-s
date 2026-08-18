@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge'
 import { Sparkles, Send, Trash2, Loader2, Bot, User as UserIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
+import { FeatureGate } from '@/components/subscription/FeatureGate'
 
 /** Tin nhắn trong cuộc hội thoại AI */
 interface AiMessage {
@@ -118,6 +119,7 @@ export default function AiChatPage() {
   return (
     <div className="flex h-screen flex-col">
       <Topbar title="Trợ lý AI" />
+      <FeatureGate featureKey="ai.assistant" label="Trợ lý AI">
       <div className="flex-1 flex flex-col bg-gray-50 min-h-0">
         <div className="px-6 py-3 border-b bg-white flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -202,6 +204,7 @@ export default function AiChatPage() {
           </div>
         </div>
       </div>
+      </FeatureGate>
     </div>
   )
 }

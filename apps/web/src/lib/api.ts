@@ -117,10 +117,23 @@ api.interceptors.response.use(
   },
   async (error) => {
     const original = error.config
-    if (error.response?.status === 403 && error.response?.data?.code === 'FEATURE_LOCKED') {
+    // Chấp nhận CẢ HAI bộ tên field.
+    //
+    // Thoả thuận đã chốt với BE là `code: "FEATURE_LOCKED"` + `featureKey`, và
+    // BE báo đã sửa. Nhưng bản chạy thật đo được hôm 18/08 là
+    // `code: "FEATURE_NOT_AVAILABLE"` + `feature` (xem AI_HANDOFF_LATEST.md) —
+    // có log thật, không phải phỏng đoán. Chưa ai xác nhận server đã deploy.
+    //
+    // Bắt cả tên cũ là lưới đỡ: BE deploy rồi thì chạy theo tên mới, chưa
+    // deploy hoặc lỡ rollback thì dialog vẫn nổ đúng.
+    const errCode = error.response?.data?.code ?? error.response?.data?.errorCode
+    if (
+      error.response?.status === 403 &&
+      (errCode === 'FEATURE_LOCKED' || errCode === 'FEATURE_NOT_AVAILABLE')
+    ) {
       emitFeatureLocked({
         message: getApiErrorMessage(error, 'Tính năng chưa nằm trong gói hiện tại.'),
-        featureKey: error.response?.data?.featureKey,
+        featureKey: error.response?.data?.featureKey ?? error.response?.data?.feature,
       })
     }
     if (error.response?.status === 401 && !original._retry) {
